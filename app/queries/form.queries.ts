@@ -7,3 +7,10 @@ export const getForm = e.params({ id: e.uuid }, (p) =>
     name: true,
   }))
 );
+
+export const listForms = e.select(e.Form, (form) => ({
+  filter: e.op(form.user.id, "=", e.global.current_user.id),
+  id: true,
+  structure: true,
+  name: true,
+}));
