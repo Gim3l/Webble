@@ -12,26 +12,45 @@ import {
   Checkbox,
   Anchor,
   Stack,
+  Alert,
 } from "@mantine/core";
-import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react";
-import { ActionFunctionArgs, json } from "@remix-run/node";
+import {
+  IconBrandGithub,
+  IconBrandGoogle,
+  IconInfoCircle,
+} from "@tabler/icons-react";
+import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { auth } from "~/services/auth.server";
-import { useFetcher } from "@remix-run/react";
+import { Link, useFetcher } from "@remix-run/react";
+import { UserAlreadyRegisteredError } from "@edgedb/auth-remix/server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
 
-  const { headers } = await auth.emailPasswordSignUp(request, {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-  });
+  try {
+    const { headers } = await auth.emailPasswordSignUp(request, {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    });
 
-  return json({}, { headers });
+    return redirect("/dashboard", { headers });
+  } catch (err) {
+    if (err instanceof UserAlreadyRegisteredError) {
+      return json({
+        error:
+          "An account already exists with this email. Please try signing in.",
+      });
+    }
+
+    console.log(err);
+
+    return json({ error: "Something went wrong" });
+  }
 }
 
 export default function LoginPage(props: PaperProps) {
   const [type, toggle] = useToggle(["login", "register"]);
-  const signupFetcher = useFetcher();
+  const signupFetcher = useFetcher<{ error: string }>();
   const form = useForm({
     initialValues: {
       email: "",
@@ -49,9 +68,9 @@ export default function LoginPage(props: PaperProps) {
   });
 
   return (
-    <Paper radius="md" p="xl" withBorder {...props}>
+    <Paper radius="md" p="xl" withBorder {...props} w={"100%"} px={"xl"}>
       <Text size="lg" fw={500}>
-        Welcome to Webble, {type} with
+        Welcome to Webble, register with
       </Text>
 
       <Group grow mb="md" mt="md">
@@ -107,22 +126,20 @@ export default function LoginPage(props: PaperProps) {
               }
             />
           )}
+
+          {signupFetcher.data?.error && (
+            <Alert color={"red"} variant={"outline"} icon={<IconInfoCircle />}>
+              {signupFetcher.data.error}
+            </Alert>
+          )}
         </Stack>
 
         <Group justify="space-between" mt="xl">
-          <Anchor
-            component="button"
-            type="button"
-            c="dimmed"
-            onClick={() => toggle()}
-            size="xs"
-          >
-            {type === "register"
-              ? "Already have an account? Login"
-              : "Don't have an account? Register"}
+          <Anchor component={Link} c="dimmed" size="xs" to={"/login"}>
+            Already have an account? Login
           </Anchor>
           <Button type="submit" radius="xl">
-            {upperFirst(type)}
+            Register
           </Button>
         </Group>
       </form>

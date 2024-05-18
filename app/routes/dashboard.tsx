@@ -1,28 +1,40 @@
 import { DashboardHeader } from "~/components/layout/DashboardHeader";
+import { Container, SimpleGrid } from "@mantine/core";
+import { useLoaderData } from "@remix-run/react";
 import {
-  ActionIcon,
-  Avatar,
-  Card,
-  Container,
-  Flex,
-  Menu,
-  rem,
-  SimpleGrid,
-  Stack,
-  Title,
-} from "@mantine/core";
-import { Link, useLoaderData } from "@remix-run/react";
-import { IconDotsVertical, IconExternalLink } from "@tabler/icons-react";
-import { LoaderFunctionArgs } from "@remix-run/node";
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  redirect,
+} from "@remix-run/node";
 import { auth } from "~/services/auth.server";
-import { listForms } from "~/queries/form.queries";
+import { createForm, listForms } from "~/queries/form.queries";
+import AgentCard from "~/components/cards/AgentCard";
+import NewAgentCard from "~/components/cards/NewAgentCard";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = auth.getSession(request);
   const isSignedIn = await session.isSignedIn();
+
+  if (!isSignedIn) throw redirect("/login");
+
   const forms = await listForms.run(session.client);
 
   return { isSignedIn, forms };
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const session = auth.getSession(request);
+  const client = session.client;
+
+  const action = formData.get("_action");
+
+  if (action === "create") {
+    const name = formData.get("name") as string;
+    const form = await createForm.run(client, { name });
+
+    return redirect("/build/" + form.id);
+  }
 }
 
 function Dashboard() {
@@ -31,62 +43,14 @@ function Dashboard() {
     <div>
       <DashboardHeader />
       <Container size="xl">
-        <SimpleGrid cols={{ sm: 2, md: 4 }}>
-          {loaderData.forms.map((form) => (
-            <Card
-              key={form.id}
-              w={240}
-              h={240}
-              component={Link}
-              to={`/build/${form.id}`}
-              withBorder
-              style={{
-                cursor: "pointer",
-              }}
-            >
-              <Stack>
-                <Flex
-                  justify={"end"}
-                  onClick={(e) => {
-                    e.preventDefault();
-                  }}
-                >
-                  <Menu width={200} shadow="md">
-                    <Menu.Target>
-                      <ActionIcon variant={"light"}>
-                        <IconDotsVertical size={18} />
-                      </ActionIcon>
-                    </Menu.Target>
+        <SimpleGrid
+          cols={{ sm: 3, md: 4, lg: 5, xs: 2 }}
+          px={{ sm: "lg", xs: "lg" }}
+        >
+          <NewAgentCard />
 
-                    <Menu.Dropdown>
-                      <Menu.Item component="a" href="https://mantine.dev">
-                        Mantine website
-                      </Menu.Item>
-                      <Menu.Item
-                        leftSection={
-                          <IconExternalLink
-                            style={{ width: rem(14), height: rem(14) }}
-                          />
-                        }
-                        component="a"
-                        href="https://mantine.dev"
-                        target="_blank"
-                      >
-                        External link
-                      </Menu.Item>
-                    </Menu.Dropdown>
-                  </Menu>
-                </Flex>
-                <Flex justify={"center"} align={"center"}>
-                  <Avatar color="cyan" radius="md" size={"xl"}>
-                    🦄
-                  </Avatar>
-                </Flex>
-                <Flex justify={"center"}>
-                  <Title order={3}>{form.name}</Title>
-                </Flex>
-              </Stack>
-            </Card>
+          {loaderData.forms.map((form) => (
+            <AgentCard key={form.id} form={form} />
           ))}
         </SimpleGrid>
       </Container>

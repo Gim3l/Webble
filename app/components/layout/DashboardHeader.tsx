@@ -24,9 +24,12 @@ import {
   IconTrash,
   IconSwitchHorizontal,
   IconChevronDown,
+  IconLock,
+  IconLogout2,
 } from "@tabler/icons-react";
 // import { MantineLogo } from "@mantinex/mantine-logo";
 import classes from "./DashboardHeader.module.css";
+import { Link } from "@remix-run/react";
 
 const user = {
   name: "Jane Spoonfighter",
@@ -88,95 +91,21 @@ export function DashboardHeader() {
               </UnstyledButton>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Item
-                leftSection={
-                  <IconHeart
-                    style={{ width: rem(16), height: rem(16) }}
-                    color={theme.colors.red[6]}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Liked posts
-              </Menu.Item>
-              <Menu.Item
-                leftSection={
-                  <IconStar
-                    style={{ width: rem(16), height: rem(16) }}
-                    color={theme.colors.yellow[6]}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Saved posts
-              </Menu.Item>
-              <Menu.Item
-                leftSection={
-                  <IconMessage
-                    style={{ width: rem(16), height: rem(16) }}
-                    color={theme.colors.blue[6]}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Your comments
-              </Menu.Item>
+              {/*<Menu.Divider />*/}
 
-              <Menu.Label>Settings</Menu.Label>
+              {/*<Menu.Label>Danger zone</Menu.Label>*/}
               <Menu.Item
+                color="red"
+                component={Link}
+                to={"/logout"}
                 leftSection={
-                  <IconSettings
-                    style={{ width: rem(16), height: rem(16) }}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Account settings
-              </Menu.Item>
-              <Menu.Item
-                leftSection={
-                  <IconSwitchHorizontal
-                    style={{ width: rem(16), height: rem(16) }}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Change account
-              </Menu.Item>
-              <Menu.Item
-                leftSection={
-                  <IconLogout
+                  <IconLogout2
                     style={{ width: rem(16), height: rem(16) }}
                     stroke={1.5}
                   />
                 }
               >
                 Logout
-              </Menu.Item>
-
-              <Menu.Divider />
-
-              <Menu.Label>Danger zone</Menu.Label>
-              <Menu.Item
-                leftSection={
-                  <IconPlayerPause
-                    style={{ width: rem(16), height: rem(16) }}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Pause subscription
-              </Menu.Item>
-              <Menu.Item
-                color="red"
-                leftSection={
-                  <IconTrash
-                    style={{ width: rem(16), height: rem(16) }}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Delete account
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>

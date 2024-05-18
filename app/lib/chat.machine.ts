@@ -127,10 +127,12 @@ export const chatMachine = setup({
             options: currentElement.data.options,
           });
 
-          self.send({
-            type: "checkEdge",
-            edge: fallbackEdge,
-          });
+          if (fallbackEdge) {
+            self.send({
+              type: "checkEdge",
+              edge: fallbackEdge,
+            });
+          }
         }
 
         const nextEdges = currentElementSourceEdges.filter(

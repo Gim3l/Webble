@@ -13,10 +13,12 @@ module default {
   }
 
   type Form {
-    required name: str;
+    required name: str {
+        constraint min_len_value(2);
+    };
     required structure: json;
     multi sessions := .<form[is ChatSession];
-    user: User;
+    required user: User;
   }
 
   type ChatSession {

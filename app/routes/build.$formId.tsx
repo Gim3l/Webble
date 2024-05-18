@@ -7,8 +7,20 @@ import {
   TextInput,
   Group,
   Text,
+  Title,
+  Flex,
+  ActionIcon,
+  Tooltip,
+  Loader,
+  Collapse,
+  JsonInput,
 } from "@mantine/core";
-import { IconLayersIntersect2 } from "@tabler/icons-react";
+import {
+  IconArrowBack,
+  IconArrowBackUp,
+  IconArrowForwardUp,
+  IconLayersIntersect2,
+} from "@tabler/icons-react";
 import React, {
   ReactNode,
   SetStateAction,
@@ -62,11 +74,18 @@ import {
 } from "~/components/collect/store";
 import ChoiceInputElement from "~/components/collect/elements/ChoiceInputElement";
 import { useSnapshot } from "valtio/react";
-import { useFetcher, useLoaderData, useParams } from "@remix-run/react";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { getForm } from "~/queries/form.queries";
+import {
+  Fetcher,
+  Link,
+  useFetcher,
+  useLoaderData,
+  useParams,
+} from "@remix-run/react";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
+import { getForm, updateFormStructure } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
-import { fitView } from "@xyflow/system";
+import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
+import { auth } from "~/services/auth.server";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
@@ -78,10 +97,35 @@ export async function loader({ params }: LoaderFunctionArgs) {
   return json({ form });
 }
 
+export async function action({ request, params }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const _action = formData.get("_action");
+  const session = auth.getSession(request);
+  const client = session.client;
+
+  if (_action === "saveStructure") {
+    try {
+      const structure = JSON.parse(formData.get("structure") as string);
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
+      await updateFormStructure.run(client, {
+        id: params.formId as string,
+        structure,
+      });
+    } catch (err) {
+      return json({ success: false, error: "Unable to save changes" });
+    }
+
+    return json({ success: true });
+  }
+
+  return json({});
+}
+
 export default function CollectPage() {
   const ref = useRef<HTMLDivElement>();
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const { form } = useLoaderData<typeof loader>();
+  const { undo, redo } = useSnapshot(graphStore);
 
   return (
     <div className={"webble"} style={{ width: "100vw", height: "100vh" }}>
@@ -116,7 +160,7 @@ function Graph({
   // const { nodes, edges, allowNodesDrag } = useGraphState();
   const connectingNodeId = useRef(null);
   const connectingHandleId = useRef(null);
-  const { setViewport } = useReactFlow();
+  const reactFlow = useReactFlow();
 
   useOnSelectionChange({
     onChange: ({ nodes }) => {
@@ -207,19 +251,44 @@ function Graph({
   const { showContextMenu } = useContextMenu();
 
   useEffect(() => {
-    console.log({ initialEdges, initialNodes, viewport });
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-    setViewport(viewport);
+    if (initialNodes) setNodes(initialNodes);
+    if (initialEdges) setEdges(initialEdges);
+    if (viewport) reactFlow.setViewport(viewport);
   }, []);
+
+  const saveFetcher = useFetcher();
+
+  const saveGraphStructure = useDebouncedCallback(
+    async (rfInstance: ReactFlowInstance) => {
+      console.log("SAVING....");
+      const structure = JSON.stringify(rfInstance.toObject());
+
+      saveFetcher.submit(
+        { _action: "saveStructure", structure },
+        {
+          method: "POST",
+        }
+      );
+    },
+    1000
+  );
 
   return (
     <ReactFlow
       nodeTypes={nodeTypes as unknown as any}
       nodes={nodes}
       edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
+      onNodesChange={(changes) => {
+        onNodesChange(changes);
+        saveGraphStructure(reactFlow);
+      }}
+      onMoveEnd={() => {
+        saveGraphStructure(reactFlow);
+      }}
+      onEdgesChange={(changes) => {
+        onEdgesChange(changes);
+        saveGraphStructure(reactFlow);
+      }}
       onConnect={(connection) => {
         connectingNodeId.current = null;
         connectingHandleId.current = null;
@@ -258,7 +327,14 @@ function Graph({
       }}
     >
       <Controls />
+
       <Panel position={"top-right"}>
+        <TopRightPanel />
+      </Panel>
+      <Panel position={"top-left"}>
+        <TopLeftPanel saveFetcher={saveFetcher} />
+      </Panel>
+      <Panel position={"bottom-right"}>
         <DebugPanel />
       </Panel>
       <Background
@@ -266,6 +342,64 @@ function Graph({
         variant={BackgroundVariant.Dots}
       />
     </ReactFlow>
+  );
+}
+
+export function TopRightPanel() {
+  return (
+    <Card w={300} withBorder>
+      <Title order={4}>Variables</Title>
+    </Card>
+  );
+}
+
+function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
+  const loaderData = useLoaderData<typeof loader>();
+  const { undo, redo } = useSnapshot(graphStore);
+  return (
+    <>
+      <Card>
+        <Flex gap={"lg"}>
+          <Group>
+            <Button
+              size={"compact-sm"}
+              leftSection={<IconArrowBack />}
+              component={Link}
+              to={"/dashboard"}
+              variant={"light"}
+            >
+              Back
+            </Button>
+            <Tooltip label={"Undo"}>
+              <ActionIcon
+                // disabled={!canUndo}
+                size={"sm"}
+                variant={"light"}
+                onClick={() => undo()}
+              >
+                <IconArrowBackUp />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label={"Redo"} onClick={() => redo()}>
+              <ActionIcon size={"sm"} variant={"light"}>
+                <IconArrowForwardUp />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+          <Title order={4}>{loaderData.form?.name}</Title>
+        </Flex>
+      </Card>
+
+      {saveFetcher.state !== "idle" && (
+        <Flex mt={"sm"} align={"center"} gap={"xs"}>
+          <Loader type={"dots"} size={"xs"} color={"gray"}></Loader>
+          <Text fz={"xs"} c="dimmed">
+            Saving...
+          </Text>
+        </Flex>
+      )}
+    </>
   );
 }
 
@@ -302,36 +436,46 @@ function DebugPanel() {
     });
   }, [fetcher?.data?.nextElementId]);
 
+  const [opened, { toggle }] = useDisclosure(false);
+
   return (
     <Card styles={{ root: { overflow: "visible" } }} ref={setNodeRef} w={400}>
-      <Button onClick={() => autoLayout()}>AutoLayout</Button>
-      <Textarea
-        resize="vertical"
-        rows={8}
-        minRows={8}
-        value={JSON.stringify(rf.toObject(), null, 4)}
-      ></Textarea>
-      <fetcher.Form method={"POST"} action={`/chat/${params.formId}`}>
-        <input hidden readOnly name={"sessionId"} value={sessionId} />
-        <TextInput label={"Message"} name={"message"} my={"sm"}></TextInput>
-        <Group>
-          <Button type={"submit"}>Travel</Button>
-          <Button
-            onClick={() =>
-              fetcher.submit(
-                {
-                  message: "",
-                  config: JSON.stringify({ elements: nodes, edges }),
-                },
-                { action: `/chat/${params.formId}`, method: "POST" }
-              )
-            }
-          >
-            Restart
-          </Button>
-        </Group>
-      </fetcher.Form>
-      <Text>Current Node Id: {selectedNodes[0]?.id}</Text>
+      <Collapse in={opened}>
+        <JsonInput
+          resize="vertical"
+          rows={8}
+          minRows={8}
+          formatOnBlur
+          value={JSON.stringify(rf.toObject(), null, 4)}
+        ></JsonInput>
+        <fetcher.Form method={"POST"} action={`/chat/${params.formId}`}>
+          <input hidden readOnly name={"sessionId"} value={sessionId} />
+          <TextInput label={"Message"} name={"message"} my={"sm"}></TextInput>
+          <Flex justify={"space-between"}>
+            <Group>
+              <Button type={"submit"}>Travel</Button>
+              <Button
+                color={"teal"}
+                onClick={() =>
+                  fetcher.submit(
+                    {
+                      message: "",
+                      config: JSON.stringify({ elements: nodes, edges }),
+                    },
+                    { action: `/chat/${params.formId}`, method: "POST" }
+                  )
+                }
+              >
+                Restart
+              </Button>
+            </Group>
+
+            <Button onClick={() => autoLayout()}>AutoLayout</Button>
+          </Flex>
+        </fetcher.Form>
+        <Text>Current Node Id: {selectedNodes?.[0]?.id}</Text>
+      </Collapse>
+      <Button onClick={() => toggle()}>Toggle Debug</Button>
     </Card>
   );
 }

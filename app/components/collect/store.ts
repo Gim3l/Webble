@@ -8,14 +8,12 @@ import {
   getNodesBounds,
   type Node,
   NodeChange,
-  useReactFlow,
 } from "@xyflow/react";
 import { nanoid } from "nanoid";
-import { proxy } from "valtio";
 import { type ElementNode } from "./elements/config";
-import { useState } from "react";
-import graph from "~/components/collect/Graph";
 import { layoutD3DAG } from "~/components/collect/utils/node/algorithms/d3-dag";
+// import { proxyWithHistory } from "valtio-history";
+import { proxy } from "valtio";
 
 export type GroupNodeData = { name: string };
 export type NewNodeData = {};
@@ -109,7 +107,7 @@ export function updateNode<T extends Record<string, any>>(id: string, data: T) {
 
 export function createElementNode(
   node: Pick<ElementNode, "id" | "type" | "data" | "position">,
-  placeholderId: string,
+  placeholderId: string
 ) {
   console.log({ node, placeholderId });
   graphStore.nodes = graphStore.nodes.filter((n) => n.id !== placeholderId);
@@ -154,7 +152,7 @@ export function createCollectionNode({ offset = 40 }: { offset?: number }) {
 
   const selectedNodesIds = graphStore.selectedNodes.map((n) => n.id);
   const otherNodes = nodes.filter(
-    (node) => !selectedNodesIds.includes(node.id),
+    (node) => !selectedNodesIds.includes(node.id)
   );
   const updatedNodes: Node[] = nodes
     .filter((node) => selectedNodesIds.includes(node.id))
@@ -175,7 +173,7 @@ export function createCollectionNode({ offset = 40 }: { offset?: number }) {
 
 export function deleteNode(nodeId: string) {
   graphStore.edges = graphStore.edges.filter(
-    (e) => e.target !== nodeId || e.source !== nodeId,
+    (e) => e.target !== nodeId || e.source !== nodeId
   );
   graphStore.nodes = graphStore.nodes.filter((node) => node.id !== nodeId);
 }
@@ -221,16 +219,16 @@ export function swapNodePositions(fromNodeId: string, toNodeId: string) {
 
   // update edges
   const fromNodeEdges = edges.filter(
-    (edge) => edge.source === fromNodeId || edge.target === fromNodeId,
+    (edge) => edge.source === fromNodeId || edge.target === fromNodeId
   );
   const toNodeEdges = edges.filter(
-    (edge) => edge.source === toNodeId || edge.target === toNodeId,
+    (edge) => edge.source === toNodeId || edge.target === toNodeId
   );
 
   const affectedEdges = Array.from(new Set([...fromNodeEdges, ...toNodeEdges]));
 
   const otherEdges = edges.filter(
-    (e) => !affectedEdges.map((edge) => edge.id).includes(e.id),
+    (e) => !affectedEdges.map((edge) => edge.id).includes(e.id)
   );
   const newEdges = affectedEdges.map((edge) => {
     // checks if edges are directly connected
