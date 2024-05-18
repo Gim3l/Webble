@@ -1,0 +1,51 @@
+.mantine-contextmenu-item-button {
+  padding: 8px !important;
+}
+
+.react-flow__handle {
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--mantine-primary-color-filled) !important;
+  border: 4px solid var(--mantine-primary-color-2) !important;
+  z-index: 2000;
+}
+
+.webble .react-flow__handle-top {
+  top: -18px;
+}
+
+.webble .react-flow__handle-bottom {
+  bottom: -18px;
+}
+
+.webble .react-flow__handle-left {
+  left: -18px;
+}
+
+.webble .react-flow__handle-right {
+  right: -18px;
+}
+
+.webble__inner-handle .react-flow__handle {
+  width: 14px !important;
+  height: 14px !important;
+  /*transform: translateY(0);*/
+  z-index: 2000;
+}
+
+.webble__inner-handle .react-flow__handle-top {
+  top: 0px;
+}
+
+.webble__inner-handle .react-flow__handle-bottom {
+  bottom: 0px;
+}
+
+.webble__inner-handle .react-flow__handle-left {
+  left: 7px;
+}
+
+.webble__inner-handle .react-flow__handle-right {
+  right: 7px;
+  z-index: 99999 !important;
+}

@@ -1,0 +1,18 @@
+/*.dragHandle {*/
+/*  color: light-dark(var(--mantine-color-gray-6), var(--mantine-color-dark-1));*/
+/*}*/
+
+.topSection {
+  background: light-dark(
+    var(--mantine-color-gray-2),
+    var(--mantine-color-dark-8)
+  );
+}
+
+.bottomSection {
+  position: relative;
+  background: light-dark(
+    var(--mantine-color-gray-3),
+    var(--mantine-color-dark-9)
+  );
+}
