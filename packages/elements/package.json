@@ -1,0 +1,13 @@
+{
+  "name": "@webble/elements",
+  "version": "0.0.1",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.0.0-next.18",
+    "@tabler/icons-react": "^3.4.0",
+    "nanoid": "^5.0.7",
+    "typescript": "^5.1.6"
+  }
+}
