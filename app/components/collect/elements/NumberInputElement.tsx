@@ -1,4 +1,4 @@
-import { NumberInput, Stack, TextInput } from "@mantine/core";
+import { Flex, NumberInput, Stack, Text, TextInput } from "@mantine/core";
 import { IconHash } from "@tabler/icons-react";
 import ElementWrapper from "./ElementWrapper";
 import { TYPE_NUMBER_INPUT_ELEMENT } from "./config";
@@ -14,7 +14,7 @@ export type NumberInputElementData = {
 };
 
 function NumberInputElement(
-  node: Node<NumberInputElementData, typeof TYPE_NUMBER_INPUT_ELEMENT>,
+  node: Node<NumberInputElementData, typeof TYPE_NUMBER_INPUT_ELEMENT>
 ) {
   return (
     <ElementWrapper
@@ -95,7 +95,13 @@ function NumberInputElement(
           />
         </Stack>
       }
-    ></ElementWrapper>
+    >
+      {node.data.placeholder && (
+        <Flex gap="sm">
+          <Text c={"gray"}>{node.data.placeholder}</Text>
+        </Flex>
+      )}
+    </ElementWrapper>
   );
 }
 

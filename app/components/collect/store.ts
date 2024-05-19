@@ -12,7 +12,6 @@ import {
 import { nanoid } from "nanoid";
 import { type ElementNode } from "./elements/config";
 import { layoutD3DAG } from "~/components/collect/utils/node/algorithms/d3-dag";
-// import { proxyWithHistory } from "valtio-history";
 import { proxy } from "valtio";
 
 export type GroupNodeData = { name: string };
@@ -24,8 +23,10 @@ export const graphStore = proxy<{
   movingNodeId: string | null;
   selectedNodes: Node[];
   currentPopoverId: string | null;
+  isDraggingNode: boolean;
 }>({
   movingNodeId: null,
+  isDraggingNode: false,
   selectedNodes: [],
   currentPopoverId: null,
   edges: [],
@@ -126,8 +127,8 @@ export function createElementNode(
 
   console.log({ theEdge: { ...edge } });
 
-  if (!!edge.sourceHandle) newEdge.sourceHandle = edge.sourceHandle;
-  if (!!edge.targetHandle) newEdge.sourceHandle = edge.targetHandle;
+  if (edge.sourceHandle) newEdge.sourceHandle = edge.sourceHandle;
+  if (edge.targetHandle) newEdge.sourceHandle = edge.targetHandle;
 
   graphStore.edges = [...graphStore.edges, newEdge];
 }
@@ -268,6 +269,10 @@ export function getCollectionChildNodeBounds(collectionId: string) {
   const nodes = graphStore.nodes.filter((n) => n.parentId === collectionId);
 
   return getNodesBounds(nodes);
+}
+
+export function setIsDraggingNode(value: boolean) {
+  graphStore.isDraggingNode = value;
 }
 
 export { ElementNode };

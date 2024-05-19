@@ -13,82 +13,39 @@ export namespace std {
     export type Base64Alphabet = "standard" | "urlsafe";
   }
 }
-export namespace cfg {
-  export interface ConfigObject extends std.BaseObject {}
-  export interface AbstractConfig extends ConfigObject {
-    "extensions": ExtensionConfig[];
-    "session_idle_timeout": edgedb.Duration;
-    "session_idle_transaction_timeout": edgedb.Duration;
-    "query_execution_timeout": edgedb.Duration;
-    "listen_port": number;
-    "listen_addresses": string[];
-    "auth": Auth[];
-    "allow_dml_in_functions"?: boolean | null;
-    "allow_bare_ddl"?: AllowBareDDL | null;
-    "apply_access_policies"?: boolean | null;
-    "allow_user_specified_id"?: boolean | null;
-    "cors_allow_origins": string[];
-    "auto_rebuild_query_cache"?: boolean | null;
-    "query_cache_mode"?: QueryCacheMode | null;
-    "shared_buffers"?: edgedb.ConfigMemory | null;
-    "query_work_mem"?: edgedb.ConfigMemory | null;
-    "maintenance_work_mem"?: edgedb.ConfigMemory | null;
-    "effective_cache_size"?: edgedb.ConfigMemory | null;
-    "effective_io_concurrency"?: number | null;
-    "default_statistics_target"?: number | null;
-    "force_database_error"?: string | null;
-    "_pg_prepared_statement_cache_size": number;
-  }
-  export type AllowBareDDL = "AlwaysAllow" | "NeverAllow";
-  export interface Auth extends ConfigObject {
-    "priority": number;
-    "user": string[];
-    "method"?: AuthMethod | null;
-    "comment"?: string | null;
-  }
-  export interface AuthMethod extends ConfigObject {
-    "transports": ConnectionTransport[];
-  }
-  export interface DatabaseConfig extends AbstractConfig {}
-  export interface BranchConfig extends DatabaseConfig {}
-  export interface Config extends AbstractConfig {}
-  export type ConnectionTransport = "TCP" | "TCP_PG" | "HTTP" | "SIMPLE_HTTP" | "HTTP_METRICS" | "HTTP_HEALTH";
-  export interface ExtensionConfig extends ConfigObject {
-    "cfg": AbstractConfig;
-  }
-  export interface InstanceConfig extends AbstractConfig {}
-  export interface JWT extends AuthMethod {
-    "transports": ConnectionTransport[];
-  }
-  export interface Password extends AuthMethod {
-    "transports": ConnectionTransport[];
-  }
-  export type QueryCacheMode = "InMemory" | "RegInline" | "PgFunc" | "Default";
-  export interface SCRAM extends AuthMethod {
-    "transports": ConnectionTransport[];
-  }
-  export interface Trust extends AuthMethod {}
-  export interface mTLS extends AuthMethod {
-    "transports": ConnectionTransport[];
-  }
-}
 export namespace $default {
+  export interface User extends std.$Object {
+    "identity": ext.auth.Identity;
+  }
   export interface ChatSession extends std.$Object {
     "snapshot"?: unknown | null;
     "state"?: unknown | null;
     "form"?: Form | null;
   }
   export interface Form extends std.$Object {
-    "name": string;
     "structure": unknown;
     "sessions": ChatSession[];
+    "user": User;
+    "variables": FormVariable[];
+    "name": string;
   }
+  export interface FormVariable extends std.$Object {
+    "form": Form;
+    "label": string;
+  }
+  export interface current_user extends User {}
 }
+import User = $default.User;
 import ChatSession = $default.ChatSession;
 import Form = $default.Form;
+import FormVariable = $default.FormVariable;
+import current_user = $default.current_user;
 export type {
+  User,
   ChatSession,
-  Form
+  Form,
+  FormVariable,
+  current_user
 };
 export namespace ext {
   export namespace auth {
@@ -219,6 +176,68 @@ export namespace ext {
       "email": string;
       "user_handle": Uint8Array;
     }
+  }
+}
+export namespace __default {
+  export interface current_user extends $default.User {}
+}
+export namespace cfg {
+  export interface ConfigObject extends std.BaseObject {}
+  export interface AbstractConfig extends ConfigObject {
+    "extensions": ExtensionConfig[];
+    "session_idle_timeout": edgedb.Duration;
+    "session_idle_transaction_timeout": edgedb.Duration;
+    "query_execution_timeout": edgedb.Duration;
+    "listen_port": number;
+    "listen_addresses": string[];
+    "auth": Auth[];
+    "allow_dml_in_functions"?: boolean | null;
+    "allow_bare_ddl"?: AllowBareDDL | null;
+    "apply_access_policies"?: boolean | null;
+    "allow_user_specified_id"?: boolean | null;
+    "cors_allow_origins": string[];
+    "auto_rebuild_query_cache"?: boolean | null;
+    "query_cache_mode"?: QueryCacheMode | null;
+    "shared_buffers"?: edgedb.ConfigMemory | null;
+    "query_work_mem"?: edgedb.ConfigMemory | null;
+    "maintenance_work_mem"?: edgedb.ConfigMemory | null;
+    "effective_cache_size"?: edgedb.ConfigMemory | null;
+    "effective_io_concurrency"?: number | null;
+    "default_statistics_target"?: number | null;
+    "force_database_error"?: string | null;
+    "_pg_prepared_statement_cache_size": number;
+  }
+  export type AllowBareDDL = "AlwaysAllow" | "NeverAllow";
+  export interface Auth extends ConfigObject {
+    "priority": number;
+    "user": string[];
+    "method"?: AuthMethod | null;
+    "comment"?: string | null;
+  }
+  export interface AuthMethod extends ConfigObject {
+    "transports": ConnectionTransport[];
+  }
+  export interface DatabaseConfig extends AbstractConfig {}
+  export interface BranchConfig extends DatabaseConfig {}
+  export interface Config extends AbstractConfig {}
+  export type ConnectionTransport = "TCP" | "TCP_PG" | "HTTP" | "SIMPLE_HTTP" | "HTTP_METRICS" | "HTTP_HEALTH";
+  export interface ExtensionConfig extends ConfigObject {
+    "cfg": AbstractConfig;
+  }
+  export interface InstanceConfig extends AbstractConfig {}
+  export interface JWT extends AuthMethod {
+    "transports": ConnectionTransport[];
+  }
+  export interface Password extends AuthMethod {
+    "transports": ConnectionTransport[];
+  }
+  export type QueryCacheMode = "InMemory" | "RegInline" | "PgFunc" | "Default";
+  export interface SCRAM extends AuthMethod {
+    "transports": ConnectionTransport[];
+  }
+  export interface Trust extends AuthMethod {}
+  export interface mTLS extends AuthMethod {
+    "transports": ConnectionTransport[];
   }
 }
 export namespace fts {
@@ -462,28 +481,12 @@ export interface types {
       "Base64Alphabet": std.enc.Base64Alphabet;
     };
   };
-  "cfg": {
-    "ConfigObject": cfg.ConfigObject;
-    "AbstractConfig": cfg.AbstractConfig;
-    "AllowBareDDL": cfg.AllowBareDDL;
-    "Auth": cfg.Auth;
-    "AuthMethod": cfg.AuthMethod;
-    "DatabaseConfig": cfg.DatabaseConfig;
-    "BranchConfig": cfg.BranchConfig;
-    "Config": cfg.Config;
-    "ConnectionTransport": cfg.ConnectionTransport;
-    "ExtensionConfig": cfg.ExtensionConfig;
-    "InstanceConfig": cfg.InstanceConfig;
-    "JWT": cfg.JWT;
-    "Password": cfg.Password;
-    "QueryCacheMode": cfg.QueryCacheMode;
-    "SCRAM": cfg.SCRAM;
-    "Trust": cfg.Trust;
-    "mTLS": cfg.mTLS;
-  };
   "default": {
+    "User": $default.User;
     "ChatSession": $default.ChatSession;
     "Form": $default.Form;
+    "FormVariable": $default.FormVariable;
+    "current_user": $default.current_user;
   };
   "ext": {
     "auth": {
@@ -517,6 +520,28 @@ export interface types {
       "WebAuthnProviderConfig": ext.auth.WebAuthnProviderConfig;
       "WebAuthnRegistrationChallenge": ext.auth.WebAuthnRegistrationChallenge;
     };
+  };
+  "__default": {
+    "current_user": __default.current_user;
+  };
+  "cfg": {
+    "ConfigObject": cfg.ConfigObject;
+    "AbstractConfig": cfg.AbstractConfig;
+    "AllowBareDDL": cfg.AllowBareDDL;
+    "Auth": cfg.Auth;
+    "AuthMethod": cfg.AuthMethod;
+    "DatabaseConfig": cfg.DatabaseConfig;
+    "BranchConfig": cfg.BranchConfig;
+    "Config": cfg.Config;
+    "ConnectionTransport": cfg.ConnectionTransport;
+    "ExtensionConfig": cfg.ExtensionConfig;
+    "InstanceConfig": cfg.InstanceConfig;
+    "JWT": cfg.JWT;
+    "Password": cfg.Password;
+    "QueryCacheMode": cfg.QueryCacheMode;
+    "SCRAM": cfg.SCRAM;
+    "Trust": cfg.Trust;
+    "mTLS": cfg.mTLS;
   };
   "fts": {
     "ElasticLanguage": fts.ElasticLanguage;

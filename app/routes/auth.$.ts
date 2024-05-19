@@ -1,7 +1,7 @@
-import { redirect } from "@remix-run/node";
+import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { auth } from "~/services/auth.server";
 
-export const { loader } = auth.createAuthRouteHandlers({
+const { loader: loaderFn } = auth.createAuthRouteHandlers({
   async onOAuthCallback({ error, tokenData, provider, isSignUp }) {
     return redirect("/");
   },
@@ -9,3 +9,7 @@ export const { loader } = auth.createAuthRouteHandlers({
     return redirect("/");
   },
 });
+
+export function loader(args: LoaderFunctionArgs) {
+  return loaderFn(args);
+}

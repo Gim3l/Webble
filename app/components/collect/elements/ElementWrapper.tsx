@@ -31,7 +31,6 @@ function ElementWrapper({
   node,
   children,
   configEl,
-  groupId,
   icon,
 }: {
   node: ElementNode;
@@ -44,29 +43,11 @@ function ElementWrapper({
 
   if (!node) return;
 
-  const { attributes, listeners, setNodeRef, transform, active } = useSortable({
-    id: node.id,
-    data: {
-      type: node.type,
-      data: node.data,
-      groupId,
-    },
-    transition: {
-      duration: 150, // milliseconds
-      easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-    },
-  });
-
-  if (active?.id === node.id) {
-    return <DragSkeleton />;
-  }
-
   const theme = useMantineTheme();
-  const isNew = node.id.startsWith("new");
   const { showContextMenu } = useContextMenu();
   const colorScheme = useMantineColorScheme();
 
-  const { selectedNodes, movingNodeId, currentPopoverId } =
+  const { selectedNodes, movingNodeId, isDraggingNode } =
     useSnapshot(graphStore);
   const isSelected = !!selectedNodes?.find((n) => n.id === node.id);
 
@@ -128,15 +109,14 @@ function ElementWrapper({
       </div>
 
       <Popover
-        position="left-start"
+        position="top"
         withArrow
         arrowSize={20}
-        trapFocus
-        closeOnClickOutside
         key={node.id}
-        opened={isSelected && selectedNodes.length === 1}
+        closeOnClickOutside
+        opened={isSelected && selectedNodes.length === 1 && !!configEl}
         closeOnEscape
-        disabled={true}
+        // disabled={!!configEl || isDraggingNode}
       >
         <Popover.Target>
           <motion.div

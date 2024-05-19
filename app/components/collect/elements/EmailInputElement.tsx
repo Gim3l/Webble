@@ -1,4 +1,4 @@
-import { Stack, TextInput } from "@mantine/core";
+import { Flex, Stack, Text, TextInput } from "@mantine/core";
 import { Node, NodeProps } from "@xyflow/react";
 import ElementWrapper from "./ElementWrapper";
 import { TYPE_EMAIL_INPUT_ELEMENT, elementsConfig } from "./config";
@@ -10,7 +10,7 @@ export type EmailElementData = {
 };
 
 function EmailInputElement(
-  node: NodeProps<Node<EmailElementData, typeof TYPE_EMAIL_INPUT_ELEMENT>>,
+  node: NodeProps<Node<EmailElementData, typeof TYPE_EMAIL_INPUT_ELEMENT>>
 ) {
   return (
     <ElementWrapper
@@ -47,7 +47,11 @@ function EmailInputElement(
         </Stack>
       }
     >
-      <></>
+      {node.data.placeholder && (
+        <Flex gap="sm">
+          <Text c={"gray"}>{node.data.placeholder}</Text>
+        </Flex>
+      )}
     </ElementWrapper>
   );
 }

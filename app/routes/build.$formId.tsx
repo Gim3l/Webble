@@ -14,12 +14,20 @@ import {
   Loader,
   Collapse,
   JsonInput,
+  ThemeIcon,
+  List,
+  rem,
+  Divider,
+  Input,
+  ScrollArea,
 } from "@mantine/core";
 import {
   IconArrowBack,
   IconArrowBackUp,
   IconArrowForwardUp,
   IconLayersIntersect2,
+  IconTrash,
+  IconVariable,
 } from "@tabler/icons-react";
 import React, {
   ReactNode,
@@ -69,6 +77,7 @@ import {
   onEdgesChange,
   onNodesChange,
   setEdges,
+  setIsDraggingNode,
   setNodes,
   setSelectedNodes,
 } from "~/components/collect/store";
@@ -82,10 +91,18 @@ import {
   useParams,
 } from "@remix-run/react";
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { getForm, updateFormStructure } from "~/queries/form.queries";
+import {
+  createFormVariable,
+  deleteFormVariable,
+  getForm,
+  updateFormStructure,
+} from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
 import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { auth } from "~/services/auth.server";
+import { ConstraintViolationError } from "edgedb";
+import { useForm } from "@mantine/form";
+import DefaultEdge from "~/components/collect/elements/DefaultEdge";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
@@ -118,14 +135,34 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return json({ success: true });
   }
 
+  if (_action === "createVariable") {
+    const label = formData.get("label") as string;
+    try {
+      await createFormVariable.run(client, {
+        label,
+        formId: params.formId as string,
+      });
+      return json({ success: true });
+    } catch (err) {
+      if (err instanceof ConstraintViolationError) {
+        return json({ success: false, name: err.name, code: err.code });
+      }
+      return err;
+    }
+  }
+
+  if (_action === "deleteVariable") {
+    const variableId = formData.get("variableId") as string;
+    await deleteFormVariable.run(client, { variableId });
+    return json({ success: true });
+  }
+
   return json({});
 }
 
 export default function CollectPage() {
-  const ref = useRef<HTMLDivElement>();
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const { form } = useLoaderData<typeof loader>();
-  const { undo, redo } = useSnapshot(graphStore);
 
   return (
     <div className={"webble"} style={{ width: "100vw", height: "100vh" }}>
@@ -156,18 +193,12 @@ function Graph({
 }) {
   const scheme = useMantineColorScheme();
   const theme = useMantineTheme();
+  const colorScheme = useMantineColorScheme();
   const { nodes, edges } = useSnapshot(graphStore);
   // const { nodes, edges, allowNodesDrag } = useGraphState();
   const connectingNodeId = useRef(null);
   const connectingHandleId = useRef(null);
   const reactFlow = useReactFlow();
-
-  useOnSelectionChange({
-    onChange: ({ nodes }) => {
-      console.log({ nodes });
-      setSelectedNodes(nodes);
-    },
-  });
 
   const nodeTypes = useMemo(() => {
     const elementNodesTypes = {
@@ -197,7 +228,6 @@ function Graph({
 
   const onConnectEnd: OnConnectEnd = useCallback(
     (event) => {
-      console.log({ event });
       if (!event.target) return;
       if (!connectingNodeId.current) return;
 
@@ -228,7 +258,6 @@ function Graph({
         };
 
         if (connectingHandleId.current) {
-          console.log({ connectingHandleId });
           newEdge.sourceHandle = connectingHandleId.current;
         }
 
@@ -260,7 +289,6 @@ function Graph({
 
   const saveGraphStructure = useDebouncedCallback(
     async (rfInstance: ReactFlowInstance) => {
-      console.log("SAVING....");
       const structure = JSON.stringify(rfInstance.toObject());
 
       saveFetcher.submit(
@@ -274,88 +302,187 @@ function Graph({
   );
 
   return (
-    <ReactFlow
-      nodeTypes={nodeTypes as unknown as any}
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={(changes) => {
-        onNodesChange(changes);
-        saveGraphStructure(reactFlow);
-      }}
-      onMoveEnd={() => {
-        saveGraphStructure(reactFlow);
-      }}
-      onEdgesChange={(changes) => {
-        onEdgesChange(changes);
-        saveGraphStructure(reactFlow);
-      }}
-      onConnect={(connection) => {
-        connectingNodeId.current = null;
-        connectingHandleId.current = null;
-        onConnect(connection);
-      }}
-      onConnectStart={onConnectStart}
-      onConnectEnd={onConnectEnd}
-      onInit={setRfInstance}
-      preventScrolling
-      proOptions={{ hideAttribution: true }}
-      defaultEdgeOptions={{ type: "smoothstep" }}
-      onSelectionEnd={(selectionEnd) => {
-        console.log({ selectionEnd });
-      }}
-      onSelectionContextMenu={(e) => {
-        const selectionRect = document
-          .querySelector(".react-flow__nodesselection-rect")
-          ?.getBoundingClientRect();
+    <>
+      <ReactFlow
+        // nodeDragThreshold={5}
+        // selectNodesOnDrag={false}
+        nodeTypes={nodeTypes as unknown as any}
+        edgeTypes={{ smoothstep: DefaultEdge }}
+        nodes={nodes}
+        edges={edges}
+        onSelectionChange={(selection) => {
+          setSelectedNodes(selection.nodes);
+        }}
+        onNodeDragStart={() => {
+          setIsDraggingNode(true);
+          console.log("dragging node");
+        }}
+        autoPanOnNodeDrag
+        onNodeDragStop={() => {
+          setIsDraggingNode(false);
+          console.log("done dragging node");
+        }}
+        colorMode={
+          colorScheme.colorScheme === "auto"
+            ? "system"
+            : colorScheme.colorScheme
+        }
+        onNodesChange={(changes) => {
+          onNodesChange(changes);
+          saveGraphStructure(reactFlow);
+        }}
+        onMoveEnd={() => {
+          saveGraphStructure(reactFlow);
+        }}
+        onEdgesChange={(changes) => {
+          onEdgesChange(changes);
+          saveGraphStructure(reactFlow);
+        }}
+        onConnect={(connection) => {
+          connectingNodeId.current = null;
+          connectingHandleId.current = null;
+          onConnect(connection);
+        }}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
+        onInit={setRfInstance}
+        preventScrolling
+        proOptions={{ hideAttribution: true }}
+        defaultEdgeOptions={{ type: "smoothstep" }}
+        onSelectionContextMenu={(e) => {
+          const selectionRect = document
+            .querySelector(".react-flow__nodesselection-rect")
+            ?.getBoundingClientRect();
 
-        console.log({ selectionRect });
+          showContextMenu([
+            {
+              key: "delete",
+              icon: <IconLayersIntersect2 size={16} />,
+              title: "Create Group",
+              onClick: () =>
+                selectionRect ? createCollectionNode({}) : undefined,
+            },
+          ])(e);
+        }}
+        onNodeContextMenu={onNodeContextMenu}
+        style={{
+          background:
+            scheme.colorScheme === "dark" ? theme.colors.dark[5] : "#fff",
+        }}
+      >
+        <Controls />
 
-        showContextMenu([
-          {
-            key: "delete",
-            icon: <IconLayersIntersect2 size={16} />,
-            title: "Create Group",
-            onClick: () =>
-              selectionRect ? createCollectionNode({}) : undefined,
-          },
-        ])(e);
-      }}
-      onNodeContextMenu={onNodeContextMenu}
-      style={{
-        background:
-          scheme.colorScheme === "dark" ? theme.colors.dark[5] : "#fff",
-      }}
-    >
-      <Controls />
-
-      <Panel position={"top-right"}>
-        <TopRightPanel />
-      </Panel>
-      <Panel position={"top-left"}>
-        <TopLeftPanel saveFetcher={saveFetcher} />
-      </Panel>
-      <Panel position={"bottom-right"}>
-        <DebugPanel />
-      </Panel>
-      <Background
-        color={scheme.colorScheme === "dark" ? "#fff" : "#ccc"}
-        variant={BackgroundVariant.Dots}
-      />
-    </ReactFlow>
+        <Panel position={"top-right"}>
+          <TopRightPanel />
+        </Panel>
+        <Panel position={"top-left"}>
+          <TopLeftPanel saveFetcher={saveFetcher} />
+        </Panel>
+        <Panel position={"bottom-right"}>
+          <DebugPanel />
+        </Panel>
+        <Background
+          color={scheme.colorScheme === "dark" ? "#fff" : "#ccc"}
+          variant={BackgroundVariant.Dots}
+        />
+      </ReactFlow>
+    </>
   );
 }
 
 export function TopRightPanel() {
+  const loaderData = useLoaderData<typeof loader>();
+  const fetcher = useFetcher<{ success: boolean }>();
+  const form = useForm({ initialValues: { label: "" } });
+
+  useEffect(() => {
+    if (fetcher.data?.success) form.reset();
+  }, [fetcher.data]);
   return (
     <Card w={300} withBorder>
       <Title order={4}>Variables</Title>
+
+      <Divider />
+
+      <List
+        spacing="xs"
+        size="sm"
+        mt={"lg"}
+        center
+        icon={
+          <ThemeIcon variant={"light"} size={24} radius="sm">
+            <IconVariable style={{ width: rem(16), height: rem(16) }} />
+          </ThemeIcon>
+        }
+      >
+        <form
+          onReset={form.onReset}
+          onSubmit={form.onSubmit(({ label }) => {
+            fetcher.submit(
+              { _action: "createVariable", label },
+              { method: "POST" }
+            );
+          })}
+        >
+          <Group mb={"lg"}>
+            <Input
+              name="label"
+              {...form.getInputProps("label")}
+              minLength={1}
+              placeholder={"Add a new variable"}
+              size={"xs"}
+            />
+            <Button
+              name={"_action"}
+              type={"submit"}
+              value={"createVariable"}
+              loading={fetcher.state !== "idle"}
+              size={"xs"}
+            >
+              Add
+            </Button>
+          </Group>
+        </form>
+
+        <ScrollArea h={200}>
+          {loaderData.form?.variables.map((variable) => (
+            <List.Item key={variable.id}>
+              <Flex align={"center"} justify={"space-between"}>
+                <Text fz={14} w={140}>
+                  {variable.label}
+                </Text>
+                <DeleteVariableAction id={variable.id} />
+              </Flex>
+            </List.Item>
+          ))}
+        </ScrollArea>
+      </List>
     </Card>
+  );
+}
+
+function DeleteVariableAction({ id }: { id: string }) {
+  const fetcher = useFetcher();
+
+  return (
+    <fetcher.Form method={"POST"}>
+      <input hidden readOnly value={id} name={"variableId"} />
+      <ActionIcon
+        type={"submit"}
+        name={"_action"}
+        value={"deleteVariable"}
+        loading={fetcher.state !== "idle"}
+        size={"sm"}
+        color={"red"}
+      >
+        <IconTrash style={{ width: rem(16), height: rem(16) }} />
+      </ActionIcon>
+    </fetcher.Form>
   );
 }
 
 function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
   const loaderData = useLoaderData<typeof loader>();
-  const { undo, redo } = useSnapshot(graphStore);
   return (
     <>
       <Card>
@@ -375,13 +502,13 @@ function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
                 // disabled={!canUndo}
                 size={"sm"}
                 variant={"light"}
-                onClick={() => undo()}
+                // onClick={() => undo()}
               >
                 <IconArrowBackUp />
               </ActionIcon>
             </Tooltip>
 
-            <Tooltip label={"Redo"} onClick={() => redo()}>
+            <Tooltip label={"Redo"}>
               <ActionIcon size={"sm"} variant={"light"}>
                 <IconArrowForwardUp />
               </ActionIcon>
@@ -394,7 +521,7 @@ function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
       {saveFetcher.state !== "idle" && (
         <Flex mt={"sm"} align={"center"} gap={"xs"}>
           <Loader type={"dots"} size={"xs"} color={"gray"}></Loader>
-          <Text fz={"xs"} c="dimmed">
+          <Text fz={"xs"} c="gray">
             Saving...
           </Text>
         </Flex>
@@ -421,7 +548,6 @@ function DebugPanel() {
   useEffect(() => {
     setSessionId(fetcher?.data?.sessionId || "");
     const node = nodes?.find((n) => n.id === fetcher?.data?.nextElementId);
-    // console.log({ node });
     if (node) setSelectedNodes([node]);
   }, [fetcher?.data?.sessionId]);
 

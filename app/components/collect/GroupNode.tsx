@@ -1,28 +1,6 @@
-import {
-  ActionIcon,
-  Box,
-  Card,
-  Divider,
-  Flex,
-  Input,
-  Popover,
-  ScrollArea,
-  Stack,
-  Title,
-  isLightColor,
-  useMantineTheme,
-} from "@mantine/core";
-import {
-  Handle,
-  NodeResizer,
-  Position,
-  useOnSelectionChange,
-  useReactFlow,
-  useStoreApi,
-} from "@xyflow/react";
-import { IconEdit, IconPlus } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
-import React from "react";
+import { Box, Card, Title, isLightColor, useMantineTheme } from "@mantine/core";
+import { NodeResizer, useOnSelectionChange, useReactFlow } from "@xyflow/react";
+import { useState } from "react";
 import { getCollectionChildNodeBounds } from "~/components/collect/store";
 
 export function CollectionNode({

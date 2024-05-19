@@ -17,8 +17,19 @@ module default {
         constraint min_len_value(2);
     };
     required structure: json;
-    multi sessions := .<form[is ChatSession];
     required user: User;
+
+    multi sessions := .<form[is ChatSession];
+    multi variables := .<form[is FormVariable];
+  }
+
+  type FormVariable {
+    required label: str {
+        constraint min_len_value(2);
+    };
+    required form: Form;
+
+    constraint exclusive on ((.form, .label));
   }
 
   type ChatSession {

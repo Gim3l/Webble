@@ -28,7 +28,7 @@ export function NewElementNode(node: NodeProps<Node<NewNodeData, "new">>) {
         disabled: false,
       };
       const group = data.find(
-        (i) => i.group === elementsConfig[key as ElementTypes].group,
+        (i) => i.group === elementsConfig[key as ElementTypes].group
       );
 
       if (group) {
@@ -77,12 +77,13 @@ export function NewElementNode(node: NodeProps<Node<NewNodeData, "new">>) {
                     type: v as ElementTypes,
                     data: elementsConfig[v as ElementTypes].default,
                     id: nanoid(),
+                    selectable: true,
                     position: {
                       x: node.positionAbsoluteX,
                       y: node.positionAbsoluteY,
                     },
                   },
-                  node.id,
+                  node.id
                 );
               }}
               searchable

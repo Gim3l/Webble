@@ -11,7 +11,7 @@ export type InputElementData = {
 };
 
 function InputElement(node: Node<InputElementData, typeof TYPE_INPUT_ELEMENT>) {
-  console.log(node.type + "- ", node.id, " changed");
+  // console.log(node.type + "- ", node.id, " changed");
 
   return (
     <ElementWrapper
