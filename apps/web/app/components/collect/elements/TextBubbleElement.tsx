@@ -4,13 +4,13 @@ import { Node, NodeProps } from "@xyflow/react";
 import ElementWrapper from "./ElementWrapper";
 import { updateNode } from "~/components/collect/store";
 import {
-  TYPE_INPUT_ELEMENT,
   elementsConfig,
-  InputElementData,
+  TextBubbleElementData,
+  TYPE_TEXT_BUBBLE_ELEMENT,
 } from "@webble/elements";
 
-function InputElement(
-  node: NodeProps<Node<InputElementData, typeof TYPE_INPUT_ELEMENT>>,
+function TextBubbleElement(
+  node: NodeProps<Node<TextBubbleElementData, typeof TYPE_TEXT_BUBBLE_ELEMENT>>,
 ) {
   // console.log(node.type + "- ", node.id, " changed");
 
@@ -22,40 +22,27 @@ function InputElement(
       configEl={
         <Stack gap="sm">
           <TextInput
-            label="Placeholder"
+            label="Text"
             placeholder="Enter field placeholder"
             variant="filled"
-            defaultValue={node.data.placeholder}
+            defaultValue={node.data.text}
             onChange={(e) => {
               updateNode<(typeof node)["data"]>(node.id, {
                 ...node.data,
-                placeholder: e.target.value,
+                text: e.target.value,
               });
             }}
-          />
-
-          <TextInput
-            label="Button Label"
-            defaultValue={node.data.buttonLabel}
-            placeholder="Enter button label"
-            variant="filled"
-            onChange={(e) =>
-              updateNode<(typeof node)["data"]>(node.id, {
-                ...node.data,
-                buttonLabel: e.target.value,
-              })
-            }
           />
         </Stack>
       }
     >
-      {node.data.placeholder && (
+      {node.data.text && (
         <Flex gap="sm">
-          <Text c={"gray"}>{node.data.placeholder}</Text>
+          <Text c={"gray"}>{node.data.text}</Text>
         </Flex>
       )}
     </ElementWrapper>
   );
 }
 
-export default InputElement;
+export default TextBubbleElement;

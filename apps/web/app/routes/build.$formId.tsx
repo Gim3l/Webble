@@ -62,10 +62,6 @@ import { nanoid } from "nanoid";
 import NumberInputElement from "~/components/collect/elements/NumberInputElement";
 import EmailInputElement from "~/components/collect/elements/EmailInputElement";
 import { NewElementNode } from "~/components/collect/NewElementNode";
-import {
-  ElementNode,
-  ElementTypes,
-} from "~/components/collect/elements/config";
 import StartNode from "~/components/collect/elements/StartNode";
 import { useContextMenu } from "mantine-contextmenu";
 import { CollectionNode } from "~/components/collect/GroupNode";
@@ -103,6 +99,8 @@ import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
 import DefaultEdge from "~/components/collect/elements/DefaultEdge";
+import { ElementTypes } from "@webble/elements";
+import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
@@ -208,6 +206,7 @@ function Graph({
       text_input: InputElement,
       number_input: NumberInputElement,
       choice_input: ChoiceInputElement,
+      text_bubble: TextBubbleElement,
     } satisfies Record<
       ElementTypes | "start" | "collection",
       (props: any) => ReactNode
@@ -270,7 +269,7 @@ function Graph({
       edges,
       connectingHandleId.current,
       connectingNodeId.current,
-    ]
+    ],
   );
 
   const onNodeContextMenu = useCallback((event, _node: Node) => {
@@ -295,10 +294,10 @@ function Graph({
         { _action: "saveStructure", structure },
         {
           method: "POST",
-        }
+        },
       );
     },
-    1000
+    1000,
   );
 
   return (
@@ -420,7 +419,7 @@ export function TopRightPanel() {
           onSubmit={form.onSubmit(({ label }) => {
             fetcher.submit(
               { _action: "createVariable", label },
-              { method: "POST" }
+              { method: "POST" },
             );
           })}
         >
@@ -588,7 +587,7 @@ function DebugPanel() {
                       message: "",
                       config: JSON.stringify({ elements: nodes, edges }),
                     },
-                    { action: `/chat/${params.formId}`, method: "POST" }
+                    { action: `/chat/${params.formId}`, method: "POST" },
                   )
                 }
               >

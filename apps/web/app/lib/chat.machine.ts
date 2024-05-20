@@ -1,6 +1,11 @@
 import { setup, assign, raise } from "xstate";
 import { ElementNode } from "~/components/collect/elements/config";
-import { Edge, Node } from "@xyflow/react";
+import { Edge, getOutgoers, Node } from "@xyflow/react";
+import {
+  ChoiceInputElementData,
+  elementsConfig,
+  ElementTypes,
+} from "@webble/elements";
 
 type EdgeData = {
   conditions: { variable: string; cond: "="; value: string }[];
@@ -13,7 +18,7 @@ type MachineContext = {
   nextElementId: null | string;
   message?: string;
   input?: Pick<Node, "type" | "data">;
-  messages?: Pick<Node, "type" | "data">[];
+  messages?: Pick<Node, "id" | "type" | "data">[];
   // values collected
   values: Record<
     string,
@@ -23,7 +28,7 @@ type MachineContext = {
 
 type MachineInput = Pick<
   MachineContext,
-  "start" | "edges" | "elements" | "message" | "values"
+  "edges" | "elements" | "message" | "values"
 >;
 
 export const initialState: MachineInput = {
@@ -70,6 +75,8 @@ export const chatMachine = setup({
     context: {} as MachineContext,
     events: {} as
       | { type: "continueChat"; message: string }
+      | { type: "resetMessages" }
+      | { type: "collectMessage"; node: Element }
       | {
           type: "checkEdge";
           edge: Edge<EdgeData>;
@@ -79,15 +86,22 @@ export const chatMachine = setup({
   },
   actions: {
     goToNextElement: ({ context, self, event }) => {
-      const startElId = context.nextElementId || "start";
+      // use last message as starting point if we can
+      const lastMessageId = context.messages?.length
+        ? context.messages[context.messages.length - 1].id
+        : null;
+
+      const startElId = lastMessageId || context.nextElementId || "start";
 
       const currentElement = context.elements.find(
-        (el) => el.id === context.nextElementId
+        (el) => el.id === context.nextElementId,
       ) as ElementNode;
+
+      console.log({ lastMessageId, startElId });
 
       // edges where start element is a source
       const currentElementSourceEdges = context.edges.filter(
-        (edge) => edge.source === startElId
+        (edge) => edge.source === startElId,
       );
 
       // will transition to node connected to the first passing edge
@@ -106,7 +120,7 @@ export const chatMachine = setup({
       ) {
         console.log("FINDING THE RIGHT OPTION ");
         const selectedOption = currentElement.data.options.find(
-          (i) => i.label === event.message
+          (i) => i.label === event.message,
         );
 
         console.log({ message: event.message, selectedOption });
@@ -116,9 +130,9 @@ export const chatMachine = setup({
 
           const fallbackEdge = currentElementSourceEdges.find(
             (edge) =>
-              !currentElement.data.options
+              !(currentElement.data as ChoiceInputElementData).options
                 .map((option) => option.id)
-                .includes(edge.sourceHandle || edge.source)
+                .includes(edge.sourceHandle || edge.source),
           );
 
           console.log({
@@ -136,7 +150,7 @@ export const chatMachine = setup({
         }
 
         const nextEdges = currentElementSourceEdges.filter(
-          (el) => el.sourceHandle === selectedOption?.id
+          (el) => el.sourceHandle === selectedOption?.id,
         );
 
         for (const edge of nextEdges) {
@@ -166,10 +180,10 @@ export const chatMachine = setup({
             console.log(
               "NOT EQ??",
               context.values[condition.variable].value,
-              condition.value
+              condition.value,
             );
             passes.push(
-              context.values[condition.variable].value == condition.value
+              context.values[condition.variable].value == condition.value,
             );
 
             break;
@@ -183,24 +197,75 @@ export const chatMachine = setup({
       }
     },
     finalize: assign({
-      nextElementId: ({ event }) => {
-        if (event.type === "final") {
-          return event.edge.target;
+      nextElementId: ({ event, context, self }) => {
+        if (event.type !== "final") return null;
+
+        const node = context.elements.find(
+          (node) => node.id === event.edge.target,
+        );
+
+        // check if current node is message node, if so,
+        // check if current node has outgoers
+        // run, goToNextElement to resolve next input node,
+        // if there is no input node left i.e no outgoers, then we finalize
+        if (
+          node &&
+          elementsConfig[node.type as ElementTypes].group === "Bubbles"
+        ) {
+          const outgoers = getOutgoers(
+            node,
+            context.elements as Node[],
+            context.edges,
+          );
+
+          console.log({ currentMessages: context.messages, outgoers });
+
+          self.send({ type: "collectMessage", node });
         }
 
-        return null;
+        return event.edge.target;
       },
       input: ({ event, context }) => {
         if (event.type !== "final") return;
 
-        const inputEl = context.elements.find(
-          (el) => el.id === event.edge.target
-        );
+        const inputEl = context.elements
+          .filter(
+            (el) =>
+              el.type &&
+              elementsConfig[el.type as ElementTypes]?.group === "Inputs",
+          )
+          .find((el) => el.id === event.edge.target);
         if (!inputEl) return;
 
         return { id: inputEl.id, type: inputEl.type, data: inputEl.data };
       },
     }),
+    collectMessage: assign({
+      messages: ({ event, context }) => {
+        if (event.type !== "collectMessage") return;
+        console.log("COLLECTING MESSAGE");
+
+        return [
+          ...(context.messages || []),
+          { id: event.node.id, type: event.node.type, data: event.node.data },
+        ];
+      },
+      nextElementId: ({ event, context }) => {
+        if (event.type !== "collectMessage") return null;
+
+        // if we are at a leaf bubble/message node then we finalize by setting the nextElementId
+        const outgoers = getOutgoers(
+          event.node,
+          context.elements as Node[],
+          context.edges,
+        );
+
+        if (outgoers.length) return null;
+
+        return event.node.id;
+      },
+    }),
+    resetMessages: assign(() => ({ messages: [] })),
   },
 }).createMachine({
   context: ({ input }) => ({
@@ -209,16 +274,24 @@ export const chatMachine = setup({
     nextElementId: null,
     message: input.message,
     values: { a: { type: "variable", value: "b" } },
-    input: {},
+    messages: [],
   }),
+
   on: {
+    collectMessage: {
+      actions: ["collectMessage", "goToNextElement"],
+    },
     continueChat: {
       actions: ["goToNextElement"],
     },
     checkEdge: {
       actions: ["checkEdge"],
     },
+    resetMessages: {
+      actions: ["resetMessages"],
+    },
     final: {
+      // reenter: true,
       actions: ["finalize"],
     },
   },

@@ -17,8 +17,7 @@ import { Icon, IconTrash } from "@tabler/icons-react";
 import { Handle, NodeProps, NodeToolbar, Position } from "@xyflow/react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useSnapshot } from "valtio/react";
-import { elementsConfig } from "~/components/collect/elements/config";
-import { ElementNode } from "@webble/elements";
+import { ElementNode, elementsConfig } from "@webble/elements";
 
 function ElementWrapper({
   node,

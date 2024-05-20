@@ -128,7 +128,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     (snapshot) => {
       return !!snapshot.context.nextElementId;
     },
-    { timeout: 10_000 }
+    { timeout: 10_000 },
   );
 
   if (!snapshot.context.nextElementId) {
@@ -170,8 +170,12 @@ export async function action({ params, request }: ActionFunctionArgs) {
     (snapshot) => {
       return !!snapshot.context.nextElementId;
     },
-    { timeout: 10_000 }
+    { timeout: 10_000 },
   );
+
+  // we need to reset messages so the initial event doesn't start at the
+  // last message node
+  actor.send({ type: "resetMessages" });
 
   const persistedSnapshot = actor.getPersistedSnapshot();
 
