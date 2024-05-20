@@ -393,6 +393,7 @@ export function TopRightPanel() {
   const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher<{ success: boolean }>();
   const form = useForm({ initialValues: { label: "" } });
+  const params = useParams();
 
   useEffect(() => {
     if (fetcher.data?.success) form.reset();
@@ -402,6 +403,8 @@ export function TopRightPanel() {
       <Title order={4}>Variables</Title>
 
       <Divider />
+
+      <webble-chatbox formId={params.formId} />
 
       <List
         spacing="xs"

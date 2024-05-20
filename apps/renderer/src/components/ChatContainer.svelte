@@ -14,12 +14,10 @@
 
 
 <div class="webble-chat-container">
-    <ChatBubble>Test bubble</ChatBubble>
     {#each $messages as message}
-        <ChatBubble>{message.content.value}</ChatBubble>
+        <ChatBubble wasSent={message.type === "sent"}>{message.content.value}</ChatBubble>
     {/each}
 
-    {JSON.stringify({input: $currentInput})}
     {#if $currentInput}
         {#if $currentInput.type === "choice_input"}
             <Options options={$currentInput.data.options} />
@@ -47,8 +45,9 @@
     }
 
     .webble-chat-container {
+        box-sizing: border-box;
         display: flex;
-        padding-inline: 8px;
+        padding: 14px;
         gap: 14px;
         flex-direction: column;
         align-items: start;

@@ -49,3 +49,22 @@
   right: 7px;
   z-index: 99999 !important;
 }
+
+:root {
+  --webble-chat-background: #f9f9f9;
+  --webble-chat-bubble-background: #eae7ec;
+  --webble-chat-bubble-text-color: #202020;
+  --webble-chat-bubble-sent-background: #6e56cf;
+  --webble-chat-bubble-sent-text-color: #f4f0fe;
+  --webble-primary-border: #c2b5f5;
+  --webble-radius: 8px;
+  --webble-button-background: #6e56cf;
+  --webble-button-background-hover: #654dc4;
+  --webble-button-background-focus: #654dc4;
+  --webble-button-border: #c2b5f5;
+  --webble-button-border-focus: #d4cafe;
+  --webble-button-text-color: #f4f0fe;
+  --webble-button-padding-inline: 16px;
+  --webble-button-padding-block: 8px;
+  --webble-button-font-size: 16px;
+}

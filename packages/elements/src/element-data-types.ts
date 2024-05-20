@@ -20,3 +20,7 @@ export type NumberInputElementData = {
 export type ChoiceInputElementData = {
   options: { id: string; label: string }[];
 };
+
+export type TextBubbleElementData = {
+  text: string;
+};

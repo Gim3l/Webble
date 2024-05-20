@@ -19,8 +19,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
         <ColorSchemeScript defaultColorScheme="dark" />
+        <script src="/webble-chatbox/index.js" />
       </head>
       <body>
+        <div id="main"></div>
         <MantineProvider defaultColorScheme="dark">
           <ContextMenuProvider>{children}</ContextMenuProvider>
         </MantineProvider>

@@ -1,8 +1,14 @@
 // import "./app.css";
+// import App from "./App.svelte";
+
 import App from "./App.svelte";
 
-const app = new App({
-  target: document.getElementById("app")!,
-});
+// customElements.define("webble-chatbox", App.element);
 
-export default app;
+// if (import.meta.env.DEV) {
+//   const app = new App({
+//     target: document.getElementById("app")!,
+//   });
+// }
+
+export default App;

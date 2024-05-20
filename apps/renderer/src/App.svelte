@@ -1,8 +1,8 @@
-<svelte:options customElement="webble-chatbox" />
+<svelte:options customElement="webble-chatbox"   />
 
 <script lang="ts">
   import ChatContainer from "./components/ChatContainer.svelte";
-  import {currentInput, sessionId, formId as chatFormId, handleReceivedMessage} from "./stores";
+  import { sessionId, formId as chatFormId, handleReceivedMessage} from "./stores";
   export let formId = "";
   export let inputValue = "";
 
@@ -26,20 +26,25 @@
 
 </script>
 
-<div>
+
+{#if import.meta.env.DEV}
   <div>
     Session: {$sessionId}
   </div>
   <input bind:value={inputValue} placeholder="Enter form id" />
   <button on:click={() => formId = inputValue}>Start</button>
-  <ChatContainer/>
-</div>
+{/if}
+
+<ChatContainer/>
 
 <style>
   :root {
     --webble-chat-background: #F9F9F9;
     --webble-chat-bubble-background: #EAE7EC;
     --webble-chat-bubble-text-color: #202020;
+
+    --webble-chat-bubble-sent-background: #6E56CF;
+    --webble-chat-bubble-sent-text-color: #F4F0FE;
 
 
     --webble-primary-border: #C2B5F5;

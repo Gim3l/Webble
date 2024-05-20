@@ -104,15 +104,7 @@ export const chatMachine = setup({
         (edge) => edge.source === startElId,
       );
 
-      // will transition to node connected to the first passing edge
-      for (const edge of currentElementSourceEdges) {
-        self.send({
-          type: "checkEdge",
-          edge,
-        });
-      }
-
-      // handle branch nodes
+      // handle branch nodes, we want to selectively retrieve the next node
       if (
         !!currentElement &&
         currentElement.type === "choice_input" &&
@@ -153,7 +145,17 @@ export const chatMachine = setup({
           (el) => el.sourceHandle === selectedOption?.id,
         );
 
+        console.log({ nextEdges });
+
         for (const edge of nextEdges) {
+          self.send({
+            type: "checkEdge",
+            edge,
+          });
+        }
+      } else {
+        // will transition to node connected to the first passing edge
+        for (const edge of currentElementSourceEdges) {
           self.send({
             type: "checkEdge",
             edge,
