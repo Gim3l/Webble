@@ -6,6 +6,9 @@ export default defineConfig({
   build: {
     outDir: "../web/public/webble-chatbox",
     rollupOptions: {
+      input: {
+        index: "./src/webble.ts",
+      },
       output: {
         entryFileNames: `[name].js`, // works
         chunkFileNames: `[name].js`, // works
