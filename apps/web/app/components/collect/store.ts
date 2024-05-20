@@ -231,29 +231,37 @@ export function swapNodePositions(fromNodeId: string, toNodeId: string) {
     (e) => !affectedEdges.map((edge) => edge.id).includes(e.id),
   );
   const newEdges = affectedEdges.map((edge) => {
+    const { targetHandle, sourceHandle, ...newEdge } = edge;
+
     // checks if edges are directly connected
     if (
       (edge.source === fromNodeId && edge.target === toNodeId) ||
       (edge.source === toNodeId && edge.target === fromNodeId)
     ) {
       return {
-        ...edge,
+        ...newEdge,
         source: edge.target,
         target: edge.source,
+        // sourceHandle: edge.sourceHandle || edge.source,
+        // targetHandle: edge.targetHandle || edge.target,
       };
     }
 
     // handle to node
     if (edge.source === toNodeId) {
-      return { ...edge, source: fromNodeId };
+      if (edge.sourceHandle === null) delete edge.sourceHandle;
+      return { ...newEdge, source: fromNodeId };
     } else if (edge.target === toNodeId) {
-      return { ...edge, target: fromNodeId };
+      if (edge.sourceHandle === null) delete edge.sourceHandle;
+      return { ...newEdge, target: fromNodeId };
     }
 
     if (edge.source === fromNodeId) {
-      return { ...edge, source: toNodeId };
+      if (edge.sourceHandle === null) delete edge.sourceHandle;
+      return { ...newEdge, source: toNodeId };
     } else if (edge.target === fromNodeId) {
-      return { ...edge, target: toNodeId };
+      if (edge.sourceHandle === null) delete edge.sourceHandle;
+      return { ...newEdge, target: toNodeId };
     }
 
     return edge;
