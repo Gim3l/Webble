@@ -5,7 +5,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 export default defineConfig({
   build: {
     outDir:
-      process.env.IS_PROD === "true"
+      process.env.NODE_ENV === "production"
         ? "../web/public/webble-chatbox"
         : "../web/public/webble-chatbox-dev",
     rollupOptions: {
