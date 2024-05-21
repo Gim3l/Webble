@@ -4,7 +4,10 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
-    outDir: "../web/public/webble-chatbox",
+    outDir:
+      process.env.IS_PROD === "true"
+        ? "../web/public/webble-chatbox"
+        : "../web/public/webble-chatbox-dev",
     rollupOptions: {
       input: {
         index: "./src/webble.ts",

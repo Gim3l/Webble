@@ -5,12 +5,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { ContextMenuProvider } from "mantine-contextmenu";
 import "mantine-contextmenu/styles.layer.css";
 
 import { createTheme, MantineProvider, rem } from "@mantine/core";
+import { json } from "@remix-run/node";
 
 const theme = createTheme({
   primaryColor: "indigo",
@@ -42,7 +44,17 @@ const theme = createTheme({
   },
 });
 
+export function loader() {
+  return json({
+    isProd:
+      process.env.NODE_ENV === "production" ||
+      process.env.VERCEL_ENV === "production",
+  });
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  const loaderData = useLoaderData<typeof loader>();
+
   return (
     <html lang="en">
       <head>
@@ -51,7 +63,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
         <ColorSchemeScript defaultColorScheme="dark" />
-        <script src="/webble-chatbox/index.js" />
+        {loaderData.isProd ? (
+          <script src="/webble-chatbox/index.js" />
+        ) : (
+          <script src="/webble-chatbox-dev/index.js" />
+        )}
       </head>
       <body>
         <div id="main"></div>
