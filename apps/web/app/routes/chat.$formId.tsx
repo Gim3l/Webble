@@ -200,10 +200,13 @@ export async function action({ params, request }: ActionFunctionArgs) {
     snapshot: persistedSnapshot,
   });
 
-  return json({
-    sessionId: chatSession.id,
-    nextElementId: snapshot.context.nextElementId,
-    input: snapshot.context.input,
-    messages: snapshot.context.messages,
-  });
+  return json(
+    {
+      sessionId: chatSession.id,
+      nextElementId: snapshot.context.nextElementId,
+      input: snapshot.context.input,
+      messages: snapshot.context.messages,
+    },
+    { headers: { "Access-Control-Allow-Origin": "*" } },
+  );
 }
