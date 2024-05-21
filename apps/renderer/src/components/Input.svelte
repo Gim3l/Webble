@@ -3,22 +3,37 @@
     import {formId, handleReceivedMessage, sendMessage, sessionId} from "../stores";
     export let placeholder: string = "Type something...";
     export let buttonLabel: string = "Send";
-    export let type: "number" | "text" = "text"
+    export let type: "number" | "text" | "email" = "text"
     export let min: number | undefined = undefined;
     export let max: number | undefined = undefined;
     export let step: number | undefined = undefined;
     let message: string | number;
+
+    function sendMessageOnEnter(e: KeyboardEvent) {
+        if(e.key === "Enter") {
+            sendMessage({formId: $formId, message, sessionId: $sessionId}, (data) => {
+                handleReceivedMessage(data);
+                message = '';
+            })
+        }
+    }
 </script>
 
 <div class="input-wrapper">
     {#if type === "number"}
-        <input min={min} max={max} step={step} type="number" placeholder={placeholder} class="webble-input" bind:value={message}>
-    {:else}
-        <input placeholder={placeholder} class="webble-input" bind:value={message}>
+        <input autofocus on:keydown={sendMessageOnEnter} min={min} max={max} step={step} type="number" placeholder={placeholder} class="webble-input" bind:value={message}>
+    {:else if type === "text"}
+        <input autofocus on:keydown={sendMessageOnEnter} placeholder={placeholder} class="webble-input" bind:value={message}>
+    {:else if type === "email"}
+        <input autofocus on:keydown={sendMessageOnEnter} placeholder={placeholder} type="email" class="webble-input" bind:value={message}>
     {/if}
     <Button
             on:click={() => {
-                sendMessage({formId: $formId, message, sessionId: $sessionId}, (data) => handleReceivedMessage(data))
+
+                sendMessage({formId: $formId, message, sessionId: $sessionId}, (data) => {
+                    handleReceivedMessage(data)
+                    message = ''
+                })
             }}
             --webble-radius="0px">{buttonLabel}</Button>
 </div>
@@ -26,11 +41,10 @@
 <style>
     .input-wrapper {
         display: flex;
-        width: 50%;
+        /*width: 50%;*/
         align-self: end;
         border-radius: 0.5rem;
         overflow: hidden;
-        border: 1px solid #d1d5db;
     }
 
    .webble-input {

@@ -81,7 +81,6 @@ function ChoiceInputElement(
 
               <Input
                 value={option.label}
-                autoFocus
                 pos={"relative"}
                 onKeyDown={(e) => {
                   if (e.key === "Backspace" && !option?.label) {

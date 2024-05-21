@@ -4,6 +4,15 @@
     import Options from "./Options.svelte";
     import {currentInput, messages} from "../stores";
 
+    const scrollToBottom = node => {
+        const scroll = () => node.scroll({
+            top: node.scrollHeight,
+            behavior: 'smooth',
+        });
+        scroll();
+
+        return { update: scroll }
+    };
 </script>
 
 <svelte:head>
@@ -13,9 +22,10 @@
 </svelte:head>
 
 
-<div class="webble-chat-container">
-    {#each $messages as message}
-        <ChatBubble wasSent={message.type === "sent"}>{message.content.value}</ChatBubble>
+<div class="webble-chat-container" use:scrollToBottom={$messages}>
+    {#each $messages as message, index}
+
+        <ChatBubble wasSent={message.type === "sent"} index={index}  hiddenFor={(250*index) - (index * 25)}>{message.content.value}</ChatBubble>
     {/each}
 
     {#if $currentInput}
@@ -34,6 +44,11 @@
                    buttonLabel={$currentInput.data.buttonLabel}  />
         {/if}
 
+        {#if $currentInput.type === "email_input"}
+            <Input type="email" placeholder={$currentInput.data.placeholder}
+                   buttonLabel={$currentInput.data.buttonLabel}  />
+        {/if}
+
     {/if}
 </div>
 
@@ -48,11 +63,12 @@
         box-sizing: border-box;
         display: flex;
         padding: 14px;
+        overflow-y: auto;
         gap: 14px;
         flex-direction: column;
         align-items: start;
         background: var(--webble-chat-background);
-        height: 100vh;
+        min-height: var(--webble-chat-container-min-height);
         width: 100%;
         max-width: 800px;
     }

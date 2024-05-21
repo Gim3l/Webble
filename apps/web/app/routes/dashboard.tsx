@@ -7,13 +7,19 @@ import {
   redirect,
 } from "@remix-run/node";
 import { auth } from "~/services/auth.server";
-import { createForm, listForms } from "~/queries/form.queries";
+import { createForm, deleteForm, listForms } from "~/queries/form.queries";
 import AgentCard from "~/components/cards/AgentCard";
 import NewAgentCard from "~/components/cards/NewAgentCard";
+import { createUserProfile, getCurrentUser } from "~/queries/user.queries";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = auth.getSession(request);
   const isSignedIn = await session.isSignedIn();
+
+  // automatic user profile creation, for now we don't need any
+  // additional details
+  const currentUser = await getCurrentUser.run(session.client);
+  if (!currentUser) await createUserProfile.run(session.client);
 
   if (!isSignedIn) throw redirect("/login");
 
@@ -34,6 +40,14 @@ export async function action({ request }: ActionFunctionArgs) {
     const form = await createForm.run(client, { name });
 
     return redirect("/build/" + form.id);
+  }
+
+  if (action === "delete") {
+    const formId = formData.get("formId") as string;
+
+    await deleteForm.run(client, { id: formId });
+
+    return redirect(request.url);
   }
 }
 

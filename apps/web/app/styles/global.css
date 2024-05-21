@@ -2,6 +2,14 @@
   padding: 8px !important;
 }
 
+.react-flow__pane {
+  cursor: default !important;
+}
+
+.react-flow__node {
+  cursor: pointer !important;
+}
+
 .react-flow__handle {
   width: 16px !important;
   height: 16px !important;
@@ -51,20 +59,21 @@
 }
 
 :root {
-  --webble-chat-background: #f9f9f9;
-  --webble-chat-bubble-background: #eae7ec;
-  --webble-chat-bubble-text-color: #202020;
-  --webble-chat-bubble-sent-background: #6e56cf;
-  --webble-chat-bubble-sent-text-color: #f4f0fe;
-  --webble-primary-border: #c2b5f5;
+  --webble-chat-container-min-height: 200px;
+  --webble-chat-background: var(--mantine-color-dark-light);
+  --webble-chat-bubble-background: var(--mantine-primary-color-light);
+  --webble-chat-bubble-text-color: var(--mantine-primary-color-light-color);
+  --webble-chat-bubble-sent-background: var(--mantine-primary-color-filled);
+  --webble-chat-bubble-sent-text-color: var(--mantine-primary-color-contrast);
+  --webble-primary-border: var(--mantine-primary-color-7);
   --webble-radius: 8px;
-  --webble-button-background: #6e56cf;
-  --webble-button-background-hover: #654dc4;
-  --webble-button-background-focus: #654dc4;
-  --webble-button-border: #c2b5f5;
-  --webble-button-border-focus: #d4cafe;
+  --webble-button-background: var(--mantine-primary-color-filled);
+  --webble-button-background-hover: var(--mantine-primary-color-filled-hover);
+  --webble-button-background-focus: var(--mantine-primary-color-filled-hover);
+  --webble-button-border: var(--mantine-primary-color-7);
+  --webble-button-border-focus: var(--mantine-primary-color-9);
   --webble-button-text-color: #f4f0fe;
   --webble-button-padding-inline: 16px;
   --webble-button-padding-block: 8px;
-  --webble-button-font-size: 16px;
+  --webble-button-font-size: 14px;
 }

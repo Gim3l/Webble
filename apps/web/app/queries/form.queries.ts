@@ -48,6 +48,16 @@ export const updateFormStructure = e.params(
     })),
 );
 
+export const deleteForm = e.params({ id: e.uuid }, (p) =>
+  e.delete(e.Form, (form) => ({
+    filter_single: e.op(
+      e.op(e.global.current_user, "=", form.user),
+      "and",
+      e.op(form.id, "=", p.id),
+    ),
+  })),
+);
+
 export const createFormVariable = e.params(
   { formId: e.uuid, label: e.str },
   (p) =>

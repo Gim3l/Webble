@@ -3,7 +3,13 @@ import { auth } from "~/services/auth.server";
 
 const { loader: loaderFn } = auth.createAuthRouteHandlers({
   async onOAuthCallback({ error, tokenData, provider, isSignUp }) {
-    return redirect("/");
+    if (isSignUp) {
+      console.log({ provider });
+    }
+
+    // future: redirect with user's email as a cookie
+    // so we can save it to user's profile
+    return redirect("/dashboard");
   },
   async onSignout() {
     return redirect("/");

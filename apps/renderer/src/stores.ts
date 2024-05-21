@@ -1,21 +1,32 @@
 import { writable } from "svelte/store";
 import type { ElementNode } from "@webble/elements";
 
-export let sessionId = writable<string>();
 export let formId = writable<string>();
 
-export type ChatMessage = {
-  type: "received" | "sent";
-  content: { value: string; type: "text" | "image" | "file" };
-};
+export let sessionId = writable<string>();
 
 export let messages = writable<ChatMessage[]>([]);
+export let nextElementId = writable<string>();
 
-export let currentInput = writable<ElementNode | null>();
+export let currentInput = writable<ElementNode | null>(
+  JSON.parse(localStorage.getItem(`webble-input`) || "{}"),
+);
+
+export type ChatMessage =
+  | {
+      type: "sent";
+      content: { value: string; type: "text" | "image" | "file" };
+    }
+  | {
+      id: string;
+      type: "received";
+      content: { value: string; type: "text" | "image" | "file" };
+    };
 
 type ChatResponse = {
   sessionId?: string;
   input: ElementNode;
+  nextElementId: string;
   messages: ElementNode[];
 };
 
@@ -31,6 +42,7 @@ export function sendMessage(
   },
   cb: (data: ChatResponse) => unknown,
 ) {
+  if (!message) return;
   const formData = new FormData();
 
   formData.set("message", String(message));
@@ -55,16 +67,24 @@ export function sendMessage(
 }
 
 export function handleReceivedMessage(data: ChatResponse) {
+  if (data.nextElementId) nextElementId.set(data.nextElementId);
+  console.log("NEXt", data.nextElementId);
+
   if (data.input) {
     currentInput.set(data.input);
   } else {
     currentInput.set(null);
+    localStorage.removeItem(`webble-input-${formId}`);
   }
 
-  if (data.messages) {
+  if (data.messages?.length) {
     const newMessages = data.messages.map<ChatMessage>((msg) => ({
+      id: msg.id,
       type: "received",
-      content: { type: "text", value: (msg.data as { text: string }).text },
+      content: {
+        type: "text",
+        value: (msg.data as { text: string }).text,
+      },
     }));
 
     messages.update((currentMessages) => [...currentMessages, ...newMessages]);

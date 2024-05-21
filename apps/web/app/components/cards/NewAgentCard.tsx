@@ -3,10 +3,8 @@ import {
   Button,
   Card,
   ColorInput,
-  ColorPicker,
   DEFAULT_THEME,
   Flex,
-  InputLabel,
   Modal,
   Stack,
   TextInput,
@@ -36,7 +34,7 @@ function NewAgentCard() {
           .string()
           .min(2, { message: "Name should have at least 2 letters" }),
         color: z.string().optional(),
-      })
+      }),
     ),
   });
 
@@ -47,8 +45,8 @@ function NewAgentCard() {
           onSubmit={form.onSubmit(({ name, color }) =>
             fetcher.submit(
               { name, color, _action: "create" },
-              { method: "POST" }
-            )
+              { method: "POST" },
+            ),
           )}
         >
           <TextInput
@@ -110,7 +108,7 @@ function NewAgentCard() {
         >
           <Stack>
             <Flex justify={"center"} align={"center"}>
-              <Avatar color="cyan" radius="md" size={"xl"}>
+              <Avatar radius="md" size={"xl"}>
                 <ThemeIcon>
                   <IconPlus />
                 </ThemeIcon>

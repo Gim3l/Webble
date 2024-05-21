@@ -1,4 +1,3 @@
-import { useToggle, upperFirst } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import {
   TextInput,
@@ -71,10 +70,20 @@ export default function LoginPage(props: PaperProps) {
       </Text>
 
       <Group grow mb="md" mt="md">
-        <Button leftSection={<IconBrandGoogle />} variant="default">
+        <Button
+          leftSection={<IconBrandGoogle />}
+          component={Link}
+          to={"/oauth/google"}
+          variant="default"
+        >
           Google
         </Button>
-        <Button leftSection={<IconBrandGithub />} variant="default">
+        <Button
+          component={Link}
+          to={"/oauth/github"}
+          leftSection={<IconBrandGithub />}
+          variant="default"
+        >
           GitHub
         </Button>
       </Group>

@@ -1,28 +1,68 @@
 <svelte:options customElement="webble-chatbox"   />
 
 <script lang="ts">
+  import { crossfade } from 'svelte/transition';
+  import {bounceIn, bounceInOut} from 'svelte/easing';
   import ChatContainer from "./components/ChatContainer.svelte";
-  import { sessionId, formId as chatFormId, handleReceivedMessage} from "./stores";
-  export let formId = "";
+  import {
+    sessionId,
+    formId as chatFormId,
+    handleReceivedMessage,
+    nextElementId, messages, currentInput
+  } from "./stores";
+  import {createEventDispatcher, onMount} from "svelte";
+  export let formId = import.meta.env.PROD ? "" : "97473156-16ec-11ef-ae50-b748636cd3ea";
   export let inputValue = "";
 
+  // $: {
+  //   const inputData = JSON.parse(localStorage.getItem(`webble-input-${formId}`) || "[]")
+  //   const allMessages = JSON.parse(localStorage.getItem(`webble-messages-${formId}`) || "[]")
+  //   const session = localStorage.getItem(`webble-session-${formId}`)
+  //
+  //
+  //   if(inputData) currentInput.set(inputData);
+  //   if(allMessages) messages.set(allMessages);
+  //   if(session) sessionId.set(session);
+  // }
+  //
   $: {
-    chatFormId.set(formId)
+      chatFormId.set(formId)
   }
 
-  $: {
+  const dispatch = createEventDispatcher()
+
+
+
+  nextElementId.subscribe((id) => {
+    if(id) dispatch("targetChange", id);
+  })
+
+  // reset the chat
+  export function reset() {
     let formData = new FormData();
     formData.set("message", "");
     formData.set("sessionId", "");
 
-    if(formId) {
-      fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/chat/${formId}`, {method: "POST", body: formData }).then(async (res) => {
-        const data = await res.json();
-        handleReceivedMessage(data)
-        return data
-      })
-    }
+    sessionId.set("")
+    messages.set([])
+    currentInput.set(null)
+
+    fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/chat/${formId}`, {method: "POST", body: formData }).then(async (res) => {
+      const data = await res.json();
+      handleReceivedMessage(data)
+      return data
+    })
   }
+
+  onMount(() => {
+    if(formId && !$sessionId) {
+      reset();
+    }
+  })
+
+
+
+
 
 </script>
 
@@ -33,12 +73,19 @@
   </div>
   <input bind:value={inputValue} placeholder="Enter form id" />
   <button on:click={() => formId = inputValue}>Start</button>
+
+
 {/if}
+
 
 <ChatContainer/>
 
+
+
+
 <style>
   :root {
+    height: 100%;
     --webble-chat-background: #F9F9F9;
     --webble-chat-bubble-background: #EAE7EC;
     --webble-chat-bubble-text-color: #202020;

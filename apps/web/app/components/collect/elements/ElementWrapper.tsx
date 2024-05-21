@@ -8,13 +8,20 @@ import {
   Button,
   Box,
   Text,
+  Portal,
 } from "@mantine/core";
 import { motion } from "framer-motion";
 import { deleteNode, graphStore, moveNode, swapNodePositions } from "../store";
-import { ReactNode, memo } from "react";
+import { ReactNode, memo, useState } from "react";
 import classes from "./ElementWrapper.module.css";
-import { Icon, IconTrash } from "@tabler/icons-react";
-import { Handle, NodeProps, NodeToolbar, Position } from "@xyflow/react";
+import { Icon, IconArrowsMoveHorizontal, IconTrash } from "@tabler/icons-react";
+import {
+  Handle,
+  NodeProps,
+  NodeToolbar,
+  Position,
+  useOnSelectionChange,
+} from "@xyflow/react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useSnapshot } from "valtio/react";
 import { ElementNode, elementsConfig } from "@webble/elements";
@@ -33,15 +40,19 @@ function ElementWrapper({
 }) {
   const Icon = icon;
 
-  if (!node) return;
-
   const theme = useMantineTheme();
   const { showContextMenu } = useContextMenu();
   const colorScheme = useMantineColorScheme();
 
-  const { selectedNodes, movingNodeId, isDraggingNode } =
-    useSnapshot(graphStore);
-  const isSelected = !!selectedNodes?.find((n) => n.id === node.id);
+  const [isSelected, setIsSelected] = useState<boolean>(false);
+  const { movingNodeId } = useSnapshot(graphStore);
+
+  useOnSelectionChange({
+    onChange: ({ nodes }) => {
+      const selected = !!nodes.find((n) => n.id === node.id);
+      setIsSelected(selected);
+    },
+  });
 
   const nodeAnimations = {
     shake: () => ({
@@ -100,93 +111,100 @@ function ElementWrapper({
         <Handle type="source" position={Position.Right} id={node.id} />
       </div>
 
-      <Popover
-        position="top"
-        withArrow
-        arrowSize={20}
-        key={node.id}
-        closeOnClickOutside
-        opened={isSelected && selectedNodes.length === 1 && !!configEl}
-        closeOnEscape
-        // disabled={!!configEl || isDraggingNode}
+      {/*<Popover*/}
+      {/*  position="top"*/}
+      {/*  withArrow*/}
+      {/*  arrowSize={20}*/}
+      {/*  key={node.id}*/}
+      {/*  closeOnClickOutside*/}
+      {/*  opened={*/}
+      {/*    isSelected &&*/}
+      {/*    selectedNodes.length === 1 &&*/}
+      {/*    !!configEl &&*/}
+      {/*    !isDraggingNode*/}
+      {/*  }*/}
+      {/*  closeOnEscape*/}
+      {/*  // disabled={!!configEl || isDraggingNode}*/}
+      {/*>*/}
+      {/*  <Popover.Target>*/}
+      <motion.div
+        initial={{
+          y: 0,
+        }}
+        animate={movingNodeId === node.id ? "shake" : "reset"}
+        variants={nodeAnimations}
       >
-        <Popover.Target>
-          <motion.div
-            initial={{
-              y: 0,
-            }}
-            animate={movingNodeId === node.id ? "shake" : "reset"}
-            variants={nodeAnimations}
-          >
-            <Card
-              p="sm"
-              withBorder
-              // className="hover:cursor-pointer
-              className={classes.topSection}
-              style={{
-                border: isSelected
-                  ? `1px solid ${theme.colors[theme.primaryColor][7]} `
-                  : undefined,
-              }}
-              onContextMenu={showContextMenu([
-                {
-                  key: "delete",
-                  icon: <IconTrash size={16} />,
-                  title: "Delete",
-                  onClick: () => deleteNode(node.id),
-                },
-                {
-                  key: "move",
-                  icon: <IconTrash size={16} />,
-                  title: "Move",
-                  onClick: () => {
-                    moveNode(node.id);
-                    // swapNodePositions(node.id, "el-1");
-                  },
-                },
-              ])}
-            >
-              <Card.Section px="sm" py="xs" w={200}>
-                <Flex justify={"space-between"} align={"center"}>
-                  <Flex align={"center"}>
-                    <ThemeIcon
-                      mr={6}
-                      variant={
-                        colorScheme.colorScheme === "dark" ? "light" : "filled"
-                      }
-                      radius="sm"
-                      size="xs"
-                      color={theme.primaryColor}
-                    >
-                      <Icon size={16} />
-                    </ThemeIcon>
-                    <Text>{elementsConfig[node.type!]?.name}</Text>
-                  </Flex>
-                </Flex>
-              </Card.Section>
+        <Card
+          p="sm"
+          withBorder
+          // className="hover:cursor-pointer
+          className={classes.topSection}
+          style={{
+            border: isSelected
+              ? `1px solid ${theme.colors[theme.primaryColor][7]} `
+              : undefined,
+          }}
+          onContextMenu={showContextMenu([
+            {
+              key: "delete",
+              icon: <IconTrash size={16} />,
+              title: "Delete",
+              onClick: () => deleteNode(node.id),
+            },
+            {
+              key: "move",
+              icon: <IconArrowsMoveHorizontal size={16} />,
+              title: "Move",
+              onClick: () => {
+                moveNode(node.id);
+                // swapNodePositions(node.id, "el-1");
+              },
+            },
+          ])}
+        >
+          <Card.Section px="sm" py="xs" w={200}>
+            <Flex justify={"space-between"} align={"center"}>
+              <Flex align={"center"}>
+                <ThemeIcon
+                  mr={6}
+                  variant={
+                    colorScheme.colorScheme === "dark" ? "light" : "filled"
+                  }
+                  radius="sm"
+                  size="xs"
+                  color={theme.primaryColor}
+                >
+                  <Icon size={16} />
+                </ThemeIcon>
+                <Text>{elementsConfig[node.type!]?.name}</Text>
+              </Flex>
+            </Flex>
+          </Card.Section>
 
-              {children}
+          {children}
 
-              {/*<Card.Section*/}
-              {/*  style={{ overflow: "visible" }}*/}
-              {/*  px="sm"*/}
-              {/*  py="xs"*/}
-              {/*  id={"a"}*/}
-              {/*  className={classes.bottomSection}*/}
-              {/*  w={200}*/}
-              {/*>*/}
-              {/*  <div className="webble__inner-handle">*/}
-              {/*    <Handle type="source" position={Position.Right} id={"a"} />*/}
-              {/*  </div>*/}
-              {/*  <Input></Input>*/}
-              {/*</Card.Section>*/}
-            </Card>
-          </motion.div>
-        </Popover.Target>
-        <Popover.Dropdown>{configEl}</Popover.Dropdown>
-      </Popover>
+          {/*<Card.Section*/}
+          {/*  style={{ overflow: "visible" }}*/}
+          {/*  px="sm"*/}
+          {/*  py="xs"*/}
+          {/*  id={"a"}*/}
+          {/*  className={classes.bottomSection}*/}
+          {/*  w={200}*/}
+          {/*>*/}
+          {/*  <div className="webble__inner-handle">*/}
+          {/*    <Handle type="source" position={Position.Right} id={"a"} />*/}
+          {/*  </div>*/}
+          {/*  <Input></Input>*/}
+          {/*</Card.Section>*/}
+        </Card>
+      </motion.div>
+
+      {/*<Portal target={"#webble-element-config"}>ddfd{configEl}</Portal>*/}
+      {/*</Popover.Target>*/}
+      {/*<Popover.Dropdown></Popover.Dropdown>*/}
+      {/*</Popover>*/}
     </Box>
   );
 }
 
-export default memo(ElementWrapper);
+export default ElementWrapper;

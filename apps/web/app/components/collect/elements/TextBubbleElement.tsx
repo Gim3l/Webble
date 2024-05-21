@@ -12,8 +12,6 @@ import {
 function TextBubbleElement(
   node: NodeProps<Node<TextBubbleElementData, typeof TYPE_TEXT_BUBBLE_ELEMENT>>,
 ) {
-  // console.log(node.type + "- ", node.id, " changed");
-
   return (
     <ElementWrapper
       icon={elementsConfig[node.type].icon}

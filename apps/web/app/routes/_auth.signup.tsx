@@ -74,10 +74,20 @@ export default function LoginPage(props: PaperProps) {
       </Text>
 
       <Group grow mb="md" mt="md">
-        <Button leftSection={<IconBrandGoogle />} variant="default">
+        <Button
+          component={Link}
+          to={"/oauth/google"}
+          leftSection={<IconBrandGoogle />}
+          variant="default"
+        >
           Google
         </Button>
-        <Button leftSection={<IconBrandGithub />} variant="default">
+        <Button
+          component={Link}
+          to={"/oauth/github"}
+          leftSection={<IconBrandGithub />}
+          variant="default"
+        >
           GitHub
         </Button>
       </Group>

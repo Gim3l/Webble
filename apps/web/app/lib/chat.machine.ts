@@ -212,7 +212,7 @@ export const chatMachine = setup({
         // if there is no input node left i.e no outgoers, then we finalize
         if (
           node &&
-          elementsConfig[node.type as ElementTypes].group === "Bubbles"
+          elementsConfig[node.type as ElementTypes]?.group === "Bubbles"
         ) {
           const outgoers = getOutgoers(
             node,

@@ -17,11 +17,11 @@ export function CollectionNode({
   const bounds = getCollectionChildNodeBounds(id);
   console.log({ nodeInfo });
 
-  useOnSelectionChange({
-    onChange: ({ nodes, edges }) => {
-      setIsSelected(nodes.map((node) => node.id).includes(id));
-    },
-  });
+  // useOnSelectionChange({
+  //   onChange: ({ nodes, edges }) => {
+  //     setIsSelected(nodes.map((node) => node.id).includes(id));
+  //   },
+  // });
 
   const theme = useMantineTheme();
 
