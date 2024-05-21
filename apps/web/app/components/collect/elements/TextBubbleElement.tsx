@@ -21,6 +21,7 @@ function TextBubbleElement(
       <TextInput
         placeholder="Enter message"
         variant="filled"
+        className="nodrag"
         defaultValue={node.data.text}
         size={"xs"}
         onChange={(e) => {

@@ -52,6 +52,7 @@ function InputElement(
       <TextInput
         placeholder="Enter field placeholder"
         variant={"filled"}
+        className="nodrag"
         size={"xs"}
         defaultValue={node.data.placeholder}
         onChange={(e) => {

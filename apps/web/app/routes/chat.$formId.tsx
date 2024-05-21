@@ -187,12 +187,15 @@ export async function action({ params, request }: ActionFunctionArgs) {
       formId,
     });
 
-    return json({
-      sessionId: session.id,
-      nextElementId: snapshot.context.nextElementId,
-      input: snapshot.context.input,
-      messages: snapshot.context.messages,
-    });
+    return json(
+      {
+        sessionId: session.id,
+        nextElementId: snapshot.context.nextElementId,
+        input: snapshot.context.input,
+        messages: snapshot.context.messages,
+      },
+      { headers: { "Access-Control-Allow-Origin": "*" } },
+    );
   }
 
   await updateChatSession.run(dbClient, {

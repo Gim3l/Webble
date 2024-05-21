@@ -82,6 +82,7 @@ function ChoiceInputElement(
 
               <Input
                 value={option.label}
+                className="nodrag"
                 pos={"relative"}
                 onKeyDown={(e) => {
                   if (e.key === "Backspace" && !option?.label) {
