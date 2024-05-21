@@ -49,11 +49,18 @@ function InputElement(
         </Stack>
       }
     >
-      {node.data.placeholder && (
-        <Flex gap="sm">
-          <Text c={"gray"}>{node.data.placeholder}</Text>
-        </Flex>
-      )}
+      <TextInput
+        placeholder="Enter field placeholder"
+        variant={"filled"}
+        size={"xs"}
+        defaultValue={node.data.placeholder}
+        onChange={(e) => {
+          updateNode<(typeof node)["data"]>(node.id, {
+            ...node.data,
+            placeholder: e.target.value,
+          });
+        }}
+      />
     </ElementWrapper>
   );
 }

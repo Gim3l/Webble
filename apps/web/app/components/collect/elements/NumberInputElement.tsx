@@ -16,6 +16,7 @@ function NumberInputElement(
   return (
     <ElementWrapper
       groupId=""
+      key={node.id}
       node={node}
       icon={elementsConfig[TYPE_NUMBER_INPUT_ELEMENT].icon}
       configEl={

@@ -56,6 +56,7 @@ function ChoiceInputElement(
 
   return (
     <ElementWrapper
+      key={node.id}
       icon={elementsConfig[TYPE_CHOICE_INPUT_ELEMENT].icon}
       groupId={""}
       node={node}

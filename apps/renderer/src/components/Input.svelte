@@ -21,7 +21,11 @@
 
 <div class="input-wrapper">
     {#if type === "number"}
-        <input autofocus on:keydown={sendMessageOnEnter} min={min} max={max} step={step} type="number" placeholder={placeholder} class="webble-input" bind:value={message}>
+        <input autofocus on:keydown={sendMessageOnEnter}
+               min={min} max={max}
+               step={step} type="number"
+               placeholder={placeholder}
+               class="webble-input" bind:value={message}>
     {:else if type === "text"}
         <input autofocus on:keydown={sendMessageOnEnter} placeholder={placeholder} class="webble-input" bind:value={message}>
     {:else if type === "email"}

@@ -1,5 +1,5 @@
 import { Box, Card, Title, isLightColor, useMantineTheme } from "@mantine/core";
-import { NodeResizer, useOnSelectionChange, useReactFlow } from "@xyflow/react";
+import { NodeResizer, useReactFlow } from "@xyflow/react";
 import { useState } from "react";
 import { getCollectionChildNodeBounds } from "~/components/collect/store";
 
@@ -16,12 +16,6 @@ export function CollectionNode({
   const nodeInfo = reactFlow.getNodes().find((n) => n.id === id);
   const bounds = getCollectionChildNodeBounds(id);
   console.log({ nodeInfo });
-
-  // useOnSelectionChange({
-  //   onChange: ({ nodes, edges }) => {
-  //     setIsSelected(nodes.map((node) => node.id).includes(id));
-  //   },
-  // });
 
   const theme = useMantineTheme();
 

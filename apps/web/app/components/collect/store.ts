@@ -20,11 +20,13 @@ export const graphStore = proxy<{
   nodes: Node[];
   edges: Edge[];
   movingNodeId: string | null;
+  selectedNodeId: string | null;
   selectedNodes: Node[];
   currentPopoverId: string | null;
   isDraggingNode: boolean;
 }>({
   movingNodeId: null,
+  selectedNodeId: null,
   isDraggingNode: false,
   selectedNodes: [],
   currentPopoverId: null,
@@ -269,6 +271,10 @@ export function swapNodePositions(fromNodeId: string, toNodeId: string) {
 
   graphStore.edges = [...otherEdges, ...newEdges];
   graphStore.nodes = newNodes;
+}
+
+export function setSelectedNodeId(nodeId: string) {
+  graphStore.selectedNodeId = nodeId;
 }
 
 // returns the bounds for the nodes in a collection

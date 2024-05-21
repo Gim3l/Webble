@@ -9,22 +9,31 @@ import {
   Box,
   Text,
   Portal,
+  Drawer,
+  Dialog,
+  Modal,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
 import { motion } from "framer-motion";
 import { deleteNode, graphStore, moveNode, swapNodePositions } from "../store";
-import { ReactNode, memo, useState } from "react";
+import { ReactNode, memo, useCallback, useMemo } from "react";
 import classes from "./ElementWrapper.module.css";
-import { Icon, IconArrowsMoveHorizontal, IconTrash } from "@tabler/icons-react";
 import {
-  Handle,
-  NodeProps,
-  NodeToolbar,
-  Position,
-  useOnSelectionChange,
-} from "@xyflow/react";
+  Icon,
+  IconArrowsMoveHorizontal,
+  IconAutomaticGearbox,
+  IconEdit,
+  IconManualGearbox,
+  IconSettings2,
+  IconSettingsCog,
+  IconTrash,
+} from "@tabler/icons-react";
+import { Handle, NodeProps, NodeToolbar, Position } from "@xyflow/react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useSnapshot } from "valtio/react";
 import { ElementNode, elementsConfig } from "@webble/elements";
+import { useDisclosure, useHover } from "@mantine/hooks";
 
 function ElementWrapper({
   node,
@@ -38,40 +47,36 @@ function ElementWrapper({
   groupId: string;
   icon: Icon;
 }) {
+  console.log("ruunning" + node.id);
+  const [opened, { open, close, toggle }] = useDisclosure();
   const Icon = icon;
 
   const theme = useMantineTheme();
   const { showContextMenu } = useContextMenu();
   const colorScheme = useMantineColorScheme();
 
-  const [isSelected, setIsSelected] = useState<boolean>(false);
   const { movingNodeId } = useSnapshot(graphStore);
+  const nodeAnimations = useMemo(
+    () => ({
+      shake: () => ({
+        // y: [0, -4, 4, -4, 4, -2, 2, 0],
+        y: [0, -5, 0, 5, 0],
+        transition: {
+          duration: 0.5,
+          ease: "easeInOut",
+          repeat: Infinity,
+        },
+      }),
 
-  useOnSelectionChange({
-    onChange: ({ nodes }) => {
-      const selected = !!nodes.find((n) => n.id === node.id);
-      setIsSelected(selected);
-    },
-  });
-
-  const nodeAnimations = {
-    shake: () => ({
-      // y: [0, -4, 4, -4, 4, -2, 2, 0],
-      y: [0, -5, 0, 5, 0],
-      transition: {
-        duration: 0.5,
-        ease: "easeInOut",
-        repeat: Infinity,
-      },
+      reset: () => ({
+        y: 0,
+      }),
     }),
-
-    reset: () => ({
-      y: 0,
-    }),
-  };
+    [],
+  );
 
   return (
-    <Box>
+    <div>
       {!!movingNodeId && movingNodeId !== node.id && (
         <NodeToolbar isVisible>
           <Button
@@ -111,22 +116,33 @@ function ElementWrapper({
         <Handle type="source" position={Position.Right} id={node.id} />
       </div>
 
-      {/*<Popover*/}
-      {/*  position="top"*/}
-      {/*  withArrow*/}
-      {/*  arrowSize={20}*/}
-      {/*  key={node.id}*/}
-      {/*  closeOnClickOutside*/}
-      {/*  opened={*/}
-      {/*    isSelected &&*/}
-      {/*    selectedNodes.length === 1 &&*/}
-      {/*    !!configEl &&*/}
-      {/*    !isDraggingNode*/}
-      {/*  }*/}
-      {/*  closeOnEscape*/}
-      {/*  // disabled={!!configEl || isDraggingNode}*/}
-      {/*>*/}
-      {/*  <Popover.Target>*/}
+      <Drawer
+        opened={opened}
+        position={"left"}
+        size={"xs"}
+        onClose={() => {
+          close();
+          console.log("yoo");
+        }}
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        title={
+          <Flex align={"center"}>
+            <ThemeIcon
+              mr={6}
+              variant={colorScheme.colorScheme === "dark" ? "light" : "filled"}
+              radius="sm"
+              size="xs"
+              color={theme.primaryColor}
+            >
+              <Icon size={16} />
+            </ThemeIcon>
+            <Text>{elementsConfig[node.type!]?.name}</Text>
+          </Flex>
+        }
+      >
+        {configEl}
+      </Drawer>
+
       <motion.div
         initial={{
           y: 0,
@@ -140,7 +156,7 @@ function ElementWrapper({
           // className="hover:cursor-pointer
           className={classes.topSection}
           style={{
-            border: isSelected
+            border: false
               ? `1px solid ${theme.colors[theme.primaryColor][7]} `
               : undefined,
           }}
@@ -178,10 +194,21 @@ function ElementWrapper({
                 </ThemeIcon>
                 <Text>{elementsConfig[node.type!]?.name}</Text>
               </Flex>
+              {configEl && (
+                <Tooltip label={"Settings"}>
+                  <ActionIcon
+                    size={"xs"}
+                    variant={"light"}
+                    style={{ hover: "cursor: pointer" }}
+                    onClick={() => open()}
+                  >
+                    <IconSettingsCog />
+                  </ActionIcon>
+                </Tooltip>
+              )}
             </Flex>
           </Card.Section>
-
-          {children}
+          {children && <Box mt={"xs"}>{children}</Box>}
 
           {/*<Card.Section*/}
           {/*  style={{ overflow: "visible" }}*/}
@@ -198,12 +225,10 @@ function ElementWrapper({
           {/*</Card.Section>*/}
         </Card>
       </motion.div>
-
-      {/*<Portal target={"#webble-element-config"}>ddfd{configEl}</Portal>*/}
       {/*</Popover.Target>*/}
-      {/*<Popover.Dropdown></Popover.Dropdown>*/}
+      {/*<Popover.Dropdown>{configEl}</Popover.Dropdown>*/}
       {/*</Popover>*/}
-    </Box>
+    </div>
   );
 }
 

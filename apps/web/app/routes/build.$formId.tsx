@@ -55,6 +55,8 @@ import {
   OnConnectStart,
   OnConnectEnd,
   Viewport,
+  SelectionMode,
+  OnSelectionChangeFunc,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "~/styles/global.css";
@@ -98,7 +100,7 @@ import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
 import DefaultEdge from "~/components/collect/elements/DefaultEdge";
-import { ElementTypes } from "@webble/elements";
+import { ElementNode, ElementTypes } from "@webble/elements";
 import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
@@ -148,14 +150,11 @@ export default function CollectPage() {
 
   return (
     <div className={"webble"} style={{ width: "100vw", height: "100vh" }}>
-      <ReactFlowProvider>
-        <Graph
-          initialNodes={form.structure["nodes"]}
-          initialEdges={form.structure["edges"]}
-          rfInstance={rfInstance}
-          viewport={form.structure["viewport"]}
-          setRfInstance={setRfInstance}
-        />
+      <ReactFlowProvider
+        initialNodes={form.structure["nodes"] || []}
+        initialEdges={form.structure["edges"] || []}
+      >
+        <Graph rfInstance={rfInstance} setRfInstance={setRfInstance} />
       </ReactFlowProvider>
     </div>
   );
@@ -163,16 +162,11 @@ export default function CollectPage() {
 
 function Graph({
   setRfInstance,
-  initialNodes,
-  initialEdges,
-  viewport,
 }: {
   rfInstance: ReactFlowInstance | null;
   setRfInstance: React.Dispatch<SetStateAction<ReactFlowInstance | null>>;
-  initialNodes: Node[];
-  initialEdges: Edge[];
-  viewport: Viewport;
 }) {
+  const { form } = useLoaderData<typeof loader>();
   const scheme = useMantineColorScheme();
   const theme = useMantineTheme();
   const colorScheme = useMantineColorScheme();
@@ -262,13 +256,6 @@ function Graph({
   }, []);
   const { showContextMenu } = useContextMenu();
 
-  useEffect(() => {
-    if (initialNodes) setNodes(initialNodes);
-    if (initialEdges) setEdges(initialEdges);
-    if (viewport) reactFlow.setViewport(viewport);
-    console.log({ viewport });
-  }, []);
-
   const saveFetcher = useFetcher();
   const params = useParams();
 
@@ -287,41 +274,32 @@ function Graph({
     1000,
   );
 
-  // const onSelectionChange = useCallback((selection) => {
-  //   // console.log("yo")
-  //   react(selection.nodes);
-  // }, []);
+  const handleNodesChange = useCallback((changes) => {
+    onNodesChange(changes);
+    saveGraphStructure(reactFlow);
+  }, []);
 
-  // const onNodeDragStart = useCallback(() => {
-  //   setIsDraggingNode(true);
-  // }, []);
-  //
-  // const onNodeDragStop = useCallback(() => {
-  //   setIsDraggingNode(false);
-  // }, []);
+  useEffect(() => {
+    setNodes(form.structure["nodes"] || []);
+    setEdges(form.structure["edges"] || []);
+    if (form.structure["viewport"])
+      reactFlow.setViewport(form.structure["viewport"]);
+  }, []);
 
   return (
     <>
       <ReactFlow
-        // nodeDragThreshold={5}
-        // selectNodesOnDrag={false}
         nodeTypes={nodeTypes as unknown as any}
         edgeTypes={{ smoothstep: DefaultEdge }}
         nodes={nodes}
         edges={edges}
-        // onSelectionChange={onSelectionChange}
-        // onNodeDragStart={onNodeDragStart}
-        // autoPanOnNodeDrag
-        // onNodeDragStop={onNodeDragStop}
+        onSelectionChange={() => {}}
         colorMode={
           colorScheme.colorScheme === "auto"
             ? "system"
             : colorScheme.colorScheme
         }
-        onNodesChange={(changes) => {
-          onNodesChange(changes);
-          saveGraphStructure(reactFlow);
-        }}
+        onNodesChange={handleNodesChange}
         onMoveEnd={() => {
           saveGraphStructure(reactFlow);
         }}
@@ -337,25 +315,24 @@ function Graph({
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         onInit={setRfInstance}
-        preventScrolling
         proOptions={{ hideAttribution: true }}
         defaultEdgeOptions={{ type: "smoothstep" }}
-        onSelectionContextMenu={(e) => {
-          const selectionRect = document
-            .querySelector(".react-flow__nodesselection-rect")
-            ?.getBoundingClientRect();
-
-          showContextMenu([
-            {
-              key: "delete",
-              icon: <IconLayersIntersect2 size={16} />,
-              title: "Create Group",
-              onClick: () =>
-                selectionRect ? createCollectionNode({}) : undefined,
-            },
-          ])(e);
-        }}
-        onNodeContextMenu={onNodeContextMenu}
+        // onSelectionContextMenu={(e) => {
+        //   const selectionRect = document
+        //     .querySelector(".react-flow__nodesselection-rect")
+        //     ?.getBoundingClientRect();
+        //
+        //   showContextMenu([
+        //     {
+        //       key: "delete",
+        //       icon: <IconLayersIntersect2 size={16} />,
+        //       title: "Create Group",
+        //       onClick: () =>
+        //         selectionRect ? createCollectionNode({}) : undefined,
+        //     },
+        //   ])(e);
+        // }}
+        // onNodeContextMenu={onNodeContextMenu}
         style={{
           background:
             scheme.colorScheme === "dark" ? theme.colors.dark[5] : "#fff",
@@ -389,7 +366,6 @@ function Graph({
 
 export function Chat() {
   const params = useParams();
-  const [chatboxKey, setChatboxKey] = useState();
   const chatboxRef = useRef<HTMLElement>(null);
   const reactFlow = useReactFlow();
 
@@ -432,7 +408,6 @@ export function Chat() {
 
       <webble-chatbox
         ref={chatboxRef}
-        key={chatboxKey}
         formId={params.formId}
         style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
       />
@@ -642,12 +617,12 @@ function DebugPanel() {
   useEffect(() => {
     setSessionId(fetcher?.data?.sessionId || "");
     const node = nodes?.find((n) => n.id === fetcher?.data?.nextElementId);
-    if (node) setSelectedNodes([node]);
+    // if (node) setSelectedNodes([node]);
   }, [fetcher?.data?.sessionId]);
 
   useEffect(() => {
     const node = nodes?.find((n) => n.id === fetcher?.data?.nextElementId);
-    if (node) setSelectedNodes([node]);
+    // if (node) setSelectedNodes([node]);
 
     rf.fitView({
       nodes: [{ id: node?.id }],

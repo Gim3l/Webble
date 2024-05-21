@@ -7,7 +7,7 @@
 }
 
 .react-flow__node {
-  cursor: pointer !important;
+  /*cursor: pointer !important;*/
 }
 
 .react-flow__handle {

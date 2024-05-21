@@ -10,10 +10,10 @@ import { Handle, Node, Position, useOnSelectionChange } from "@xyflow/react";
 
 import { TYPE_INPUT_ELEMENT } from "./config";
 import classes from "./ElementWrapper.module.css";
-import { graphStore } from "~/components/collect/store";
-import { useSnapshot } from "valtio/react";
 import { IconFlag } from "@tabler/icons-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
+import { useSnapshot } from "valtio/react";
+import { graphStore } from "~/components/collect/store";
 
 export type InputElementData = {
   placeholder: string;
@@ -23,21 +23,8 @@ export type InputElementData = {
 function StartNode(node: Node<InputElementData, typeof TYPE_INPUT_ELEMENT>) {
   const colorScheme = useMantineColorScheme();
   const theme = useMantineTheme();
-  const [isSelected, setIsSelected] = useState(false);
 
-  // const { selectedNodes } = useSnapshot(graphStore);
-  // const isSelected = useMemo(
-  //   () => !!selectedNodes?.find((n) => n.id === node.id),
-  //   [selectedNodes],
-  // );
   console.log("node debug, ", node.id);
-
-  useOnSelectionChange({
-    onChange: ({ nodes }) => {
-      const selected = !!nodes.find((n) => n.id === node.id);
-      setIsSelected(selected);
-    },
-  });
 
   return (
     <>
@@ -48,7 +35,7 @@ function StartNode(node: Node<InputElementData, typeof TYPE_INPUT_ELEMENT>) {
         withBorder
         // className="hover:cursor-pointer"
         style={{
-          border: isSelected
+          border: node.selected
             ? `1px solid ${theme.colors[theme.primaryColor][7]} `
             : undefined,
         }}
