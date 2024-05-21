@@ -3,7 +3,7 @@ import createClientAuth, {
 } from "@edgedb/auth-remix/client";
 
 export const options: RemixAuthOptions = {
-  baseUrl: "http://localhost:5174",
+  baseUrl: process.env.BASE_URL || "",
   authCookieName: "webble-session",
 };
 
