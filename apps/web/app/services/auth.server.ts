@@ -7,8 +7,8 @@ export const authClient = createClient({
   tlsSecurity:
     process.env.VERCEL_ENV === "production" ||
     process.env.NODE_ENV === "production"
-      ? "insecure"
-      : "strict",
+      ? "strict"
+      : "insecure",
 });
 
 export const auth = createServerAuth(authClient, options);
