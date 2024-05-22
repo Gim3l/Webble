@@ -194,7 +194,14 @@ export async function action({ params, request }: ActionFunctionArgs) {
         input: snapshot.context.input,
         messages: snapshot.context.messages,
       },
-      { headers: { "Access-Control-Allow-Origin": "*" } },
+      {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST",
+          "Access-Control-Allow-Headers":
+            "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+        },
+      },
     );
   }
 
@@ -210,6 +217,13 @@ export async function action({ params, request }: ActionFunctionArgs) {
       input: snapshot.context.input,
       messages: snapshot.context.messages,
     },
-    { headers: { "Access-Control-Allow-Origin": "*" } },
+    {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST",
+        "Access-Control-Allow-Headers":
+          "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
+      },
+    },
   );
 }
