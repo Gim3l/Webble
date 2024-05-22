@@ -1,6 +1,7 @@
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
 import { createActor, Snapshot, waitFor } from "xstate";
 import { chatMachine } from "~/lib/chat.machine";
+import { cors } from "remix-utils/cors";
 import {
   createChatSession,
   getChatSession,
@@ -9,16 +10,19 @@ import {
 import { dbClient } from "~/lib/db";
 import { getForm } from "~/queries/form.queries";
 
-export async function loader() {
-  return json(
-    {},
-    {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "*",
-        "Access-Control-Allow-Headers": "*",
+export async function loader({ request }: LoaderFunctionArgs) {
+  return cors(
+    request,
+    json(
+      {},
+      {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "*",
+          "Access-Control-Allow-Headers": "*",
+        },
       },
-    },
+    ),
   );
 }
 
@@ -64,16 +68,19 @@ export async function action({ params, request }: ActionFunctionArgs) {
   const persistedSnapshot = actor.getPersistedSnapshot();
 
   if (!form)
-    throw json(
-      { error: "Form not valid" },
-      {
-        status: 400,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "*",
-          "Access-Control-Allow-Headers": "*",
+    throw cors(
+      request,
+      json(
+        { error: "Form not valid" },
+        {
+          status: 400,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+          },
         },
-      },
+      ),
     );
 
   if (!chatSession) {
@@ -82,20 +89,14 @@ export async function action({ params, request }: ActionFunctionArgs) {
       formId,
     });
 
-    return json(
-      {
+    return cors(
+      request,
+      json({
         sessionId: session.id,
         nextElementId: snapshot.context.nextElementId,
         input: snapshot.context.input,
         messages: snapshot.context.messages,
-      },
-      {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "*",
-          "Access-Control-Allow-Headers": "*",
-        },
-      },
+      }),
     );
   }
 
@@ -104,19 +105,13 @@ export async function action({ params, request }: ActionFunctionArgs) {
     snapshot: persistedSnapshot,
   });
 
-  return json(
-    {
+  return cors(
+    request,
+    json({
       sessionId: chatSession.id,
       nextElementId: snapshot.context.nextElementId,
       input: snapshot.context.input,
       messages: snapshot.context.messages,
-    },
-    {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "*",
-        "Access-Control-Allow-Headers": "*",
-      },
-    },
+    }),
   );
 }

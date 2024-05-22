@@ -25,6 +25,7 @@
     "@remix-run/react": "^2.9.2",
     "@remix-run/serve": "^2.9.2",
     "@tabler/icons-react": "^3.4.0",
+    "@webble/elements": "workspace:*",
     "@xyflow/react": "12.0.0-next.18",
     "clsx": "^2.1.1",
     "d3-dag": "^1.1.0",
@@ -39,11 +40,11 @@
     "postcss-simple-vars": "^7.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "remix-utils": "^7.6.0",
     "valtio": "^1.13.2",
     "valtio-history": "^0.3.3",
     "xstate": "^5.13.0",
-    "zod": "^3.23.8",
-    "@webble/elements": "workspace:*"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@edgedb/generate": "^0.5.3",
