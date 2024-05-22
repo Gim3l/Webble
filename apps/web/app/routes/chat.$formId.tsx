@@ -11,19 +11,11 @@ import { dbClient } from "~/lib/db";
 import { getForm } from "~/queries/form.queries";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  return cors(
-    request,
-    json(
-      {},
-      {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "*",
-          "Access-Control-Allow-Headers": "*",
-        },
-      },
-    ),
-  );
+  return cors(request, json({}), {
+    allowedHeaders: ["*"],
+    origin: "*",
+    maxAge: 0,
+  });
 }
 
 export async function action({ params, request }: ActionFunctionArgs) {
@@ -81,6 +73,10 @@ export async function action({ params, request }: ActionFunctionArgs) {
           },
         },
       ),
+      {
+        origin: "*",
+        maxAge: 0,
+      },
     );
 
   if (!chatSession) {
@@ -97,6 +93,10 @@ export async function action({ params, request }: ActionFunctionArgs) {
         input: snapshot.context.input,
         messages: snapshot.context.messages,
       }),
+      {
+        origin: "*",
+        maxAge: 0,
+      },
     );
   }
 
@@ -113,5 +113,6 @@ export async function action({ params, request }: ActionFunctionArgs) {
       input: snapshot.context.input,
       messages: snapshot.context.messages,
     }),
+    { origin: "*", maxAge: 0 },
   );
 }
