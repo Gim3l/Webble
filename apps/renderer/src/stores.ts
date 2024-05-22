@@ -51,6 +51,9 @@ export function sendMessage(
   fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/chat/${formId}`, {
     method: "POST",
     body: formData,
+    headers: {
+      Origin: window.location.origin,
+    },
   })
     .then((res) => {
       messages.update((currentMessages) => [

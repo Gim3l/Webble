@@ -47,7 +47,10 @@
     messages.set([])
     currentInput.set(null)
 
-    fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/chat/${formId}`, {method: "POST", body: formData }).then(async (res) => {
+    fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/chat/${formId}`, {method: "POST", body: formData,
+      headers: {
+        "Origin": window.location.origin
+      }}).then(async (res) => {
       const data = await res.json();
       handleReceivedMessage(data)
       return data
