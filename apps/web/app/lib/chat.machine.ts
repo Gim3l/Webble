@@ -232,7 +232,6 @@ export const chatMachine = setup({
     updateVariable: assign({
       values: ({ context, event }) => {
         if (event.type !== "continueChat") return context.values;
-        console.log({ context });
 
         const node = context.elements.find(
           (node) => node.id === context.nextElementId,

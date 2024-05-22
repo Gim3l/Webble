@@ -1,11 +1,13 @@
 import "@mantine/core/styles.css";
 import {
+  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useRouteError,
 } from "@remix-run/react";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { ContextMenuProvider } from "mantine-contextmenu";
@@ -13,6 +15,7 @@ import "mantine-contextmenu/styles.layer.css";
 
 import { createTheme, MantineProvider, rem } from "@mantine/core";
 import { json } from "@remix-run/node";
+import { NotFoundPage } from "~/components/layout/404NotFound";
 
 const theme = createTheme({
   primaryColor: "indigo",
@@ -83,4 +86,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div>
+        {error.status == 404 ? (
+          <NotFoundPage />
+        ) : (
+          <>
+            <h1>
+              {error.status} {error.statusText}
+            </h1>
+            <p>{error.data}</p>
+          </>
+        )}
+      </div>
+    );
+  } else if (error instanceof Error) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>{error.message}</p>
+        <p>The stack trace is:</p>
+        <pre>{error.stack}</pre>
+      </div>
+    );
+  } else {
+    return <h1>Unknown Error</h1>;
+  }
 }

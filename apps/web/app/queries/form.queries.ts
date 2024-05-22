@@ -4,6 +4,7 @@ import e from "dbschema/edgeql-js";
 export const getForm = e.params({ id: e.uuid }, (p) =>
   e.select(e.Form, () => ({
     filter_single: { id: p.id },
+    published: true,
     structure: true,
     name: true,
     variables: { id: true, label: true },
@@ -79,6 +80,19 @@ export const deleteFormVariable = e.params({ variableId: e.uuid }, (p) =>
       e.op(formVariable.id, "=", p.variableId),
       "and",
       e.op(formVariable.form.user, "=", e.global.current_user),
+    ),
+  })),
+);
+
+export const toggleFormVisibility = e.params({ formId: e.uuid }, (p) =>
+  e.update(e.Form, (form) => ({
+    set: {
+      published: e.op("not", form.published),
+    },
+    filter_single: e.op(
+      e.op(form.id, "=", p.formId),
+      "and",
+      e.op(form.user, "=", e.global.current_user),
     ),
   })),
 );

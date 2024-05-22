@@ -1,7 +1,6 @@
 using extension auth;
 
 
-
 module default {
   global current_user := (
     assert_single((
@@ -27,6 +26,9 @@ module default {
     };
     required structure: json;
     required user: User;
+    published: bool {
+        default := false;
+    };
 
     multi sessions := .<form[is ChatSession];
     multi variables := .<form[is FormVariable];

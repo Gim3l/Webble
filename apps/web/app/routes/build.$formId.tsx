@@ -20,24 +20,37 @@ import {
   Input,
   ScrollArea,
   Box,
+  Popover,
+  Portal,
+  HoverCard,
+  CopyButton,
 } from "@mantine/core";
 import {
   IconArrowBack,
   IconArrowBackUp,
   IconArrowForwardUp,
   IconCapture,
+  IconCheck,
+  IconCopy,
   IconFocus,
   IconFocus2,
   IconFocusCentered,
+  IconGlobe,
+  IconGlobeOff,
   IconLayersIntersect2,
   IconLock,
   IconMaximize,
   IconMinimize,
   IconRepeat,
+  IconShare,
+  IconShare2,
   IconTarget,
   IconTrash,
   IconVariable,
   IconVariablePlus,
+  IconWorld,
+  IconWorldCancel,
+  IconWorldX,
   IconZoomIn,
   IconZoomOut,
 } from "@tabler/icons-react";
@@ -103,6 +116,7 @@ import {
   createFormVariable,
   deleteFormVariable,
   getForm,
+  toggleFormVisibility,
 } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
 import {
@@ -126,7 +140,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const form = await getForm.run(dbClient, { id: formId });
 
-  return json({ form });
+  return json({ form, host: process.env.BASE_URL });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -157,12 +171,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return json({ success: true });
   }
 
+  if (_action === "toggleFormVisibility") {
+    await toggleFormVisibility.run(client, { formId: params.formId as string });
+    return json({ success: true });
+  }
+
   return json({});
 }
 
 export default function CollectPage() {
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
-  const { form } = useLoaderData<typeof loader>();
 
   return (
     <div className={"webble"} style={{ width: "100vw", height: "100vh" }}>
@@ -271,24 +289,6 @@ function Graph({
 
   const params = useParams();
 
-  // const saveFetcher = useFetcher();
-  // const saveGraphStructure = useDebouncedCallback(
-  //   async (rfInstance: ReactFlowInstance) => {
-  //     const elements = rfInstance.toObject();
-  //     if (!elements.nodes?.length) return;
-  //     const structure = JSON.stringify(elements);
-  //
-  //     saveFetcher.submit(
-  //       { _action: "saveStructure", structure },
-  //       {
-  //         method: "POST",
-  //         action: `/form/save/${params.formId}`,
-  //       },
-  //     );
-  //   },
-  //   1000,
-  // );
-
   const handleNodesChange = useCallback((changes) => {
     onNodesChange(changes);
     // saveGraphStructure(reactFlow);
@@ -338,7 +338,7 @@ function Graph({
         //
         //   showContextMenu([
         //     {
-        //       key: "delete",
+        //       key: "createGroup",
         //       icon: <IconLayersIntersect2 size={16} />,
         //       title: "Create Group",
         //       onClick: () =>
@@ -384,6 +384,9 @@ function Graph({
         <Panel position={"top-left"}>
           <TopLeftPanel />
         </Panel>
+        <Panel position={"top-center"}>
+          <TopCenterPanel />
+        </Panel>
         {/*<Panel position={"bottom-right"}>*/}
         {/*<DebugPanel />*/}
         {/*</Panel>*/}
@@ -401,6 +404,14 @@ export function Chat() {
   const chatboxRef = useRef<HTMLElement>(null);
   const reactFlow = useReactFlow();
 
+  const viewport = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () =>
+    viewport.current!.scrollTo({
+      top: viewport.current!.scrollHeight,
+      behavior: "smooth",
+    });
+
   useEffect(() => {
     if (chatboxRef.current)
       chatboxRef.current.addEventListener("targetChange", (e: unknown) => {
@@ -408,6 +419,7 @@ export function Chat() {
           if (node.id === e.detail) return { ...node, selected: true };
           return { ...node, selected: false };
         });
+        scrollToBottom();
         reactFlow.setNodes(nodes);
 
         reactFlow.fitView({
@@ -434,13 +446,13 @@ export function Chat() {
       <Divider />
 
       <Collapse in={opened}>
-        <Box h={500}>
+        <ScrollArea h={500} viewportRef={viewport}>
           <webble-chatbox
             ref={chatboxRef}
             formId={params.formId}
             style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
           />
-        </Box>
+        </ScrollArea>
 
         <Divider my={"sm"}></Divider>
 
@@ -591,6 +603,90 @@ function DeleteVariableAction({ id }: { id: string }) {
         <IconTrash style={{ width: rem(16), height: rem(16) }} />
       </ActionIcon>
     </fetcher.Form>
+  );
+}
+
+function TopCenterPanel() {
+  const fetcher = useFetcher();
+  const { form, host } = useLoaderData<typeof loader>();
+
+  const params = useParams();
+
+  return (
+    <Card>
+      <Flex gap={"lg"}>
+        <Group>
+          <HoverCard
+            closeOnClickOutside
+            width={400}
+            position="bottom"
+            withArrow
+            shadow="md"
+          >
+            <HoverCard.Target>
+              <Button
+                size={"xs"}
+                rightSection={
+                  <IconShare2 style={{ width: rem(16), height: rem(16) }} />
+                }
+              >
+                Share
+              </Button>
+            </HoverCard.Target>
+            <HoverCard.Dropdown>
+              <Input
+                value={`${host}/form/${params.formId}`}
+                // rightSection={}
+              ></Input>
+
+              <CopyButton
+                value={`${host}/form/${params.formId}`}
+                timeout={2000}
+              >
+                {({ copied, copy }) => (
+                  <Group justify={"end"} mt={"sm"}>
+                    <Button
+                      color={copied ? "teal" : undefined}
+                      size={"xs"}
+                      onClick={copy}
+                      leftSection={
+                        copied ? (
+                          <IconCheck style={{ width: rem(16) }} />
+                        ) : (
+                          <IconCopy style={{ width: rem(16) }} />
+                        )
+                      }
+                    >
+                      {copied ? "Link Copied" : "Copy Link"}
+                    </Button>
+                  </Group>
+                )}
+              </CopyButton>
+            </HoverCard.Dropdown>
+          </HoverCard>
+
+          <fetcher.Form method={"POST"}>
+            <Button
+              size={"xs"}
+              color={form?.published ? "red" : undefined}
+              name={"_action"}
+              value={"toggleFormVisibility"}
+              type={"submit"}
+              leftSection={
+                form?.published ? (
+                  <IconWorldX style={{ width: rem(16), height: rem(16) }} />
+                ) : (
+                  <IconWorld style={{ width: rem(16), height: rem(16) }} />
+                )
+              }
+              loading={fetcher.state !== "idle"}
+            >
+              {form?.published ? "Unpublish" : "Publish"}
+            </Button>
+          </fetcher.Form>
+        </Group>
+      </Flex>
+    </Card>
   );
 }
 

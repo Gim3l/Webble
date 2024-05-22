@@ -1,6 +1,17 @@
 import { Box, Flex } from "@mantine/core";
-import { useParams } from "@remix-run/react";
 import "~/styles/global.css";
+import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { getForm } from "~/queries/form.queries";
+import { dbClient } from "~/lib/db";
+import { useParams } from "@remix-run/react";
+
+export async function loader({ params }: LoaderFunctionArgs) {
+  const form = await getForm.run(dbClient, { id: params.formId as string });
+
+  if (!form?.published) throw json({}, { status: 404 });
+
+  return json({});
+}
 
 export default function WebbleForm() {
   const params = useParams();
