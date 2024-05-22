@@ -12,13 +12,13 @@ import {
 import { nanoid } from "nanoid";
 import { layoutD3DAG } from "~/components/collect/utils/node/algorithms/d3-dag";
 import { proxy } from "valtio";
-import { ElementNode } from "@webble/elements";
+import { EdgeData, ElementNode } from "@webble/elements";
 
 export type GroupNodeData = { name: string };
 
 export const graphStore = proxy<{
   nodes: Node[];
-  edges: Edge[];
+  edges: Edge<EdgeData>[];
   movingNodeId: string | null;
   selectedNodeId: string | null;
   selectedNodes: Node[];
@@ -99,7 +99,6 @@ export function openPopover(id: string | null) {
 export function updateNode<T extends Record<string, any>>(id: string, data: T) {
   graphStore.nodes = graphStore.nodes.map((n) => {
     if (n.id === id) {
-      console.log("Updating " + id);
       return { ...n, data: { ...n.data, ...data } };
     }
 
@@ -286,6 +285,40 @@ export function getCollectionChildNodeBounds(collectionId: string) {
 
 export function setIsDraggingNode(value: boolean) {
   graphStore.isDraggingNode = value;
+}
+
+export function addEdgeCondition(
+  id: string,
+  condition: EdgeData["conditions"][0],
+) {
+  graphStore.edges = graphStore.edges.map((edge) => {
+    if (edge.id === id) {
+      return {
+        ...edge,
+        data: {
+          conditions: [...(edge.data?.conditions || []), condition],
+        },
+      };
+    }
+    return edge;
+  });
+}
+
+export function removeEdgeCondition(id: string, condId: string) {
+  graphStore.edges = graphStore.edges.map((edge) => {
+    if (edge.id === id) {
+      const newConditions =
+        edge.data?.conditions.filter((cond) => cond.id !== condId) || [];
+
+      return {
+        ...edge,
+        data: {
+          conditions: edge.data?.conditions ? newConditions : [],
+        },
+      };
+    }
+    return edge;
+  });
 }
 
 declare module "valtio" {

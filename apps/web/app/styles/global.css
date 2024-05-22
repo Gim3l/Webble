@@ -60,7 +60,7 @@
 
 :root {
   --webble-chat-container-min-height: 200px;
-  --webble-chat-background: var(--mantine-color-dark-light);
+
   --webble-chat-bubble-background: var(--mantine-primary-color-light);
   --webble-chat-bubble-text-color: var(--mantine-primary-color-light-color);
   --webble-chat-bubble-sent-background: var(--mantine-primary-color-filled);

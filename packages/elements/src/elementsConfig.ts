@@ -16,6 +16,15 @@ import {
   TextBubbleElementData,
 } from "./element-data-types";
 
+export type EdgeData = {
+  conditions: {
+    id: string;
+    variable: string;
+    cond: "=" | "!=";
+    value: string;
+  }[];
+};
+
 export const TYPE_INPUT_ELEMENT = "text_input";
 export const TYPE_NUMBER_INPUT_ELEMENT = "number_input";
 export const TYPE_EMAIL_INPUT_ELEMENT = "email_input";
@@ -47,6 +56,7 @@ export const elementsConfig = {
     default: {
       buttonLabel: "Send",
       placeholder: "",
+      variable: "",
     } satisfies InputElementData,
   },
   [TYPE_NUMBER_INPUT_ELEMENT]: {
@@ -56,6 +66,7 @@ export const elementsConfig = {
     default: {
       buttonLabel: "Send",
       placeholder: "",
+      variable: "",
     } satisfies NumberInputElementData,
   },
   [TYPE_EMAIL_INPUT_ELEMENT]: {
@@ -65,6 +76,7 @@ export const elementsConfig = {
     default: {
       buttonLabel: "Send",
       placeholder: "",
+      variable: "",
     } satisfies EmailElementData,
   },
   [TYPE_CHOICE_INPUT_ELEMENT]: {
@@ -73,6 +85,7 @@ export const elementsConfig = {
     name: "Options",
     default: {
       options: [{ id: nanoid(), label: "" }],
+      variable: "",
     } satisfies ChoiceInputElementData,
   },
   [TYPE_TEXT_BUBBLE_ELEMENT]: {

@@ -63,7 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
         <ColorSchemeScript defaultColorScheme="dark" />
-        {loaderData.isProd ? (
+        {loaderData?.isProd ? (
           <script src="/webble-chatbox/index.js" />
         ) : (
           <script src="/webble-chatbox-dev/index.js" />

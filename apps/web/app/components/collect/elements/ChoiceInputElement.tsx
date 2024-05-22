@@ -60,6 +60,7 @@ function ChoiceInputElement(
       icon={elementsConfig[TYPE_CHOICE_INPUT_ELEMENT].icon}
       groupId={""}
       node={node}
+      configEl={<></>}
     >
       <FocusTrap active>
         {node.data.options.map((option) => (

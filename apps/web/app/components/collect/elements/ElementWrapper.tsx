@@ -14,10 +14,17 @@ import {
   Modal,
   ActionIcon,
   Tooltip,
+  Select,
 } from "@mantine/core";
 import { motion } from "framer-motion";
-import { deleteNode, graphStore, moveNode, swapNodePositions } from "../store";
-import { ReactNode, memo, useCallback, useMemo } from "react";
+import {
+  deleteNode,
+  graphStore,
+  moveNode,
+  swapNodePositions,
+  updateNode,
+} from "../store";
+import React, { ReactNode, memo, useCallback, useMemo } from "react";
 import classes from "./ElementWrapper.module.css";
 import {
   Icon,
@@ -32,8 +39,14 @@ import {
 import { Handle, NodeProps, NodeToolbar, Position } from "@xyflow/react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useSnapshot } from "valtio/react";
-import { ElementNode, elementsConfig } from "@webble/elements";
+import {
+  BaseInputElementData,
+  ElementNode,
+  elementsConfig,
+} from "@webble/elements";
 import { useDisclosure, useHover } from "@mantine/hooks";
+import { useLoaderData } from "@remix-run/react";
+import { loader } from "~/routes/build.$formId";
 
 function ElementWrapper({
   node,
@@ -47,8 +60,7 @@ function ElementWrapper({
   groupId: string;
   icon: Icon;
 }) {
-  console.log("ruunning" + node.id);
-  const [opened, { open, close, toggle }] = useDisclosure();
+  const [opened, { open, close }] = useDisclosure();
   const Icon = icon;
 
   const theme = useMantineTheme();
@@ -141,6 +153,8 @@ function ElementWrapper({
         }
       >
         {configEl}
+
+        <SaveToVariable node={node} />
       </Drawer>
 
       <motion.div
@@ -155,11 +169,11 @@ function ElementWrapper({
           withBorder
           // className="hover:cursor-pointer
           className={classes.topSection}
-          style={{
-            border: false
-              ? `1px solid ${theme.colors[theme.primaryColor][7]} `
-              : undefined,
-          }}
+          // style={{
+          //   border: false
+          //     ? `1px solid ${theme.colors[theme.primaryColor][7]} `
+          //     : undefined,
+          // }}
           onContextMenu={showContextMenu([
             {
               key: "delete",
@@ -229,6 +243,25 @@ function ElementWrapper({
       {/*<Popover.Dropdown>{configEl}</Popover.Dropdown>*/}
       {/*</Popover>*/}
     </div>
+  );
+}
+
+function SaveToVariable({ node }: { node: NodeProps<ElementNode> }) {
+  const { form } = useLoaderData<typeof loader>();
+  return (
+    <Select
+      data={form?.variables.map((i) => i.label)}
+      defaultValue={(node.data as BaseInputElementData)?.variable}
+      mt={"xl"}
+      onChange={(v) => {
+        updateNode<(typeof node)["data"]>(node.id, {
+          ...node.data,
+          variable: v || "",
+        });
+      }}
+      label={"Assign to Variable"}
+      size={"xs"}
+    ></Select>
   );
 }
 

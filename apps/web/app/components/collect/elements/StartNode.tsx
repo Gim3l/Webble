@@ -34,11 +34,6 @@ function StartNode(node: Node<InputElementData, typeof TYPE_INPUT_ELEMENT>) {
         p="sm"
         withBorder
         // className="hover:cursor-pointer"
-        style={{
-          border: node.selected
-            ? `1px solid ${theme.colors[theme.primaryColor][7]} `
-            : undefined,
-        }}
       >
         <Card.Section px="xl" py="xs" className={classes.topSection} w={200}>
           <Flex justify={"space-between"} align={"center"}>

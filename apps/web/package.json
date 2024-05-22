@@ -10,6 +10,7 @@
     "start": "remix-serve ./build/server/index.js",
     "generate": "pnpm exec generate edgeql-js",
     "prebuild": "npx @edgedb/generate edgeql-js && npx @edgedb/generate interfaces",
+    "edge:ui": "edgedb ui",
     "generate:interfaces": "pnpm exec generate interfaces",
     "typecheck": "tsc"
   },

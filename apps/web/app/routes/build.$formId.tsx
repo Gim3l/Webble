@@ -19,18 +19,27 @@ import {
   Divider,
   Input,
   ScrollArea,
+  Box,
 } from "@mantine/core";
 import {
   IconArrowBack,
   IconArrowBackUp,
   IconArrowForwardUp,
+  IconCapture,
+  IconFocus,
+  IconFocus2,
+  IconFocusCentered,
   IconLayersIntersect2,
+  IconLock,
   IconMaximize,
   IconMinimize,
   IconRepeat,
+  IconTarget,
   IconTrash,
   IconVariable,
   IconVariablePlus,
+  IconZoomIn,
+  IconZoomOut,
 } from "@tabler/icons-react";
 import React, {
   ReactNode,
@@ -57,6 +66,7 @@ import {
   Viewport,
   SelectionMode,
   OnSelectionChangeFunc,
+  ControlButton,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "~/styles/global.css";
@@ -95,13 +105,19 @@ import {
   getForm,
 } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
-import { useDebouncedCallback, useDisclosure, useToggle } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useStateHistory,
+  useToggle,
+} from "@mantine/hooks";
 import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
 import DefaultEdge from "~/components/collect/elements/DefaultEdge";
 import { ElementNode, ElementTypes } from "@webble/elements";
 import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
+import { subscribe } from "valtio";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
@@ -150,10 +166,7 @@ export default function CollectPage() {
 
   return (
     <div className={"webble"} style={{ width: "100vw", height: "100vh" }}>
-      <ReactFlowProvider
-        initialNodes={form.structure["nodes"] || []}
-        initialEdges={form.structure["edges"] || []}
-      >
+      <ReactFlowProvider>
         <Graph rfInstance={rfInstance} setRfInstance={setRfInstance} />
       </ReactFlowProvider>
     </div>
@@ -256,32 +269,34 @@ function Graph({
   }, []);
   const { showContextMenu } = useContextMenu();
 
-  const saveFetcher = useFetcher();
   const params = useParams();
 
-  const saveGraphStructure = useDebouncedCallback(
-    async (rfInstance: ReactFlowInstance) => {
-      const structure = JSON.stringify(rfInstance.toObject());
-
-      saveFetcher.submit(
-        { _action: "saveStructure", structure },
-        {
-          method: "POST",
-          action: `/form/save/${params.formId}`,
-        },
-      );
-    },
-    1000,
-  );
+  // const saveFetcher = useFetcher();
+  // const saveGraphStructure = useDebouncedCallback(
+  //   async (rfInstance: ReactFlowInstance) => {
+  //     const elements = rfInstance.toObject();
+  //     if (!elements.nodes?.length) return;
+  //     const structure = JSON.stringify(elements);
+  //
+  //     saveFetcher.submit(
+  //       { _action: "saveStructure", structure },
+  //       {
+  //         method: "POST",
+  //         action: `/form/save/${params.formId}`,
+  //       },
+  //     );
+  //   },
+  //   1000,
+  // );
 
   const handleNodesChange = useCallback((changes) => {
     onNodesChange(changes);
-    saveGraphStructure(reactFlow);
+    // saveGraphStructure(reactFlow);
   }, []);
 
   useEffect(() => {
-    setNodes(form.structure["nodes"] || []);
-    setEdges(form.structure["edges"] || []);
+    if (form.structure["nodes"]) setNodes(form.structure["nodes"] || []);
+    if (form.structure["edges"]) setEdges(form.structure["edges"] || []);
     if (form.structure["viewport"])
       reactFlow.setViewport(form.structure["viewport"]);
   }, []);
@@ -293,7 +308,6 @@ function Graph({
         edgeTypes={{ smoothstep: DefaultEdge }}
         nodes={nodes}
         edges={edges}
-        onSelectionChange={() => {}}
         colorMode={
           colorScheme.colorScheme === "auto"
             ? "system"
@@ -301,11 +315,11 @@ function Graph({
         }
         onNodesChange={handleNodesChange}
         onMoveEnd={() => {
-          saveGraphStructure(reactFlow);
+          // saveGraphStructure(reactFlow);
         }}
         onEdgesChange={(changes) => {
           onEdgesChange(changes);
-          saveGraphStructure(reactFlow);
+          // saveGraphStructure(reactFlow);
         }}
         onConnect={(connection) => {
           connectingNodeId.current = null;
@@ -338,19 +352,37 @@ function Graph({
             scheme.colorScheme === "dark" ? theme.colors.dark[5] : "#fff",
         }}
       >
-        <Controls />
+        {/*<Controls />*/}
         {/*<MiniMap position={"bottom-right"} nodeStrokeWidth={3} />*/}
         <Panel position={"top-right"}>
           <Chat></Chat>
         </Panel>
-        <Panel position={"bottom-right"}>
-          <NodeConfig />
-        </Panel>
         <Panel position={"bottom-left"}>
           <Variables />
         </Panel>
+        <Panel position={"bottom-center"}>
+          <Group>
+            <ActionIcon onClick={() => reactFlow.zoomIn()}>
+              <IconZoomIn
+                style={{ width: rem(18), height: rem(18) }}
+              ></IconZoomIn>
+            </ActionIcon>
+
+            <ActionIcon onClick={() => reactFlow.zoomOut()}>
+              <IconZoomOut
+                style={{ width: rem(18), height: rem(18) }}
+              ></IconZoomOut>
+            </ActionIcon>
+
+            <ActionIcon onClick={() => reactFlow.fitView()}>
+              <IconFocusCentered
+                style={{ width: rem(18), height: rem(18) }}
+              ></IconFocusCentered>
+            </ActionIcon>
+          </Group>
+        </Panel>
         <Panel position={"top-left"}>
-          <TopLeftPanel saveFetcher={saveFetcher} />
+          <TopLeftPanel />
         </Panel>
         {/*<Panel position={"bottom-right"}>*/}
         {/*<DebugPanel />*/}
@@ -386,37 +418,49 @@ export function Chat() {
       });
   }, [chatboxRef.current]);
 
-  return (
-    <Card w={400} h={500}>
-      <Group align={"center"} justify={"space-between"} mb={"sm"}>
-        <div>
-          <Title order={4}>Chat</Title>
-        </div>
+  const [opened, { toggle }] = useDisclosure(true);
 
-        <Button
-          size={"compact-sm"}
-          leftSection={<IconRepeat size={16} />}
-          onClick={() => {
-            (chatboxRef.current as unknown)?.reset();
-          }}
-        >
-          Restart
-        </Button>
+  return (
+    <Card w={400}>
+      <Group justify={"space-between"} align={"start"}>
+        <Title order={4}>Chat</Title>
+        <Tooltip label={opened ? "Minimize" : "Maximize"}>
+          <ActionIcon size={"xs"} onClick={toggle}>
+            {opened ? <IconMinimize /> : <IconMaximize />}
+          </ActionIcon>
+        </Tooltip>
       </Group>
 
       <Divider />
 
-      <webble-chatbox
-        ref={chatboxRef}
-        formId={params.formId}
-        style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
-      />
+      <Collapse in={opened}>
+        <Box h={500}>
+          <webble-chatbox
+            ref={chatboxRef}
+            formId={params.formId}
+            style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
+          />
+        </Box>
+
+        <Divider my={"sm"}></Divider>
+
+        <Group align={"end"} justify={"center"}>
+          <Button
+            size={"compact-sm"}
+            leftSection={<IconRepeat size={16} />}
+            onClick={() => {
+              (chatboxRef.current as unknown)?.reset();
+            }}
+          >
+            Restart
+          </Button>
+        </Group>
+      </Collapse>
     </Card>
   );
 }
 
 export function NodeConfig() {
-  const loaderData = useLoaderData<typeof loader>();
   const fetcher = useFetcher<{ success: boolean }>();
   const form = useForm({ initialValues: { label: "" } });
   const [opened, { toggle }] = useDisclosure(true);
@@ -550,8 +594,38 @@ function DeleteVariableAction({ id }: { id: string }) {
   );
 }
 
-function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
+function TopLeftPanel() {
   const loaderData = useLoaderData<typeof loader>();
+  const { nodes, edges } = useSnapshot(graphStore);
+  const reactFlow = useReactFlow();
+  const params = useParams();
+
+  // const [value, handlers, history] = useStateHistory({});
+
+  const saveFetcher = useFetcher();
+
+  const saveGraphStructure = useDebouncedCallback(
+    async (rfInstance: ReactFlowInstance) => {
+      const elements = rfInstance.toObject();
+      if (!elements.nodes?.length) return;
+      const structure = JSON.stringify(elements);
+
+      saveFetcher.submit(
+        { _action: "saveStructure", structure },
+        {
+          method: "POST",
+          action: `/form/save/${params.formId}`,
+        },
+      );
+    },
+    1000,
+  );
+
+  useEffect(() => {
+    // handlers.set({ nodes, edges });
+    saveGraphStructure(reactFlow);
+  }, [nodes, edges]);
+
   return (
     <>
       <Card>
@@ -566,22 +640,33 @@ function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
             >
               Back
             </Button>
-            <Tooltip label={"Undo"}>
-              <ActionIcon
-                // disabled={!canUndo}
-                size={"sm"}
-                variant={"light"}
-                // onClick={() => undo()}
-              >
-                <IconArrowBackUp />
-              </ActionIcon>
-            </Tooltip>
+            {/*<Tooltip label={"Undo"}>*/}
+            {/*  <ActionIcon*/}
+            {/*    size={"sm"}*/}
+            {/*    variant={"light"}*/}
+            {/*    onClick={() => {*/}
+            {/*      handlers.back();*/}
+            {/*      setNodes(history.history[history.current - 1].nodes);*/}
+            {/*      setEdges(history.history[history.current - 1].edges);*/}
+            {/*    }}*/}
+            {/*  >*/}
+            {/*    <IconArrowBackUp />*/}
+            {/*  </ActionIcon>*/}
+            {/*</Tooltip>*/}
 
-            <Tooltip label={"Redo"}>
-              <ActionIcon size={"sm"} variant={"light"}>
-                <IconArrowForwardUp />
-              </ActionIcon>
-            </Tooltip>
+            {/*<Tooltip label={"Redo"}>*/}
+            {/*  <ActionIcon*/}
+            {/*    size={"sm"}*/}
+            {/*    variant={"light"}*/}
+            {/*    onClick={() => {*/}
+            {/*      handlers.forward();*/}
+            {/*      setNodes(history.history[history.current + 1].nodes);*/}
+            {/*      setEdges(history.history[history.current + 1].edges);*/}
+            {/*    }}*/}
+            {/*  >*/}
+            {/*    <IconArrowForwardUp />*/}
+            {/*  </ActionIcon>*/}
+            {/*</Tooltip>*/}
           </Group>
           <Title order={4}>{loaderData.form?.name}</Title>
         </Flex>
@@ -596,82 +681,6 @@ function TopLeftPanel({ saveFetcher }: { saveFetcher: Fetcher }) {
         </Flex>
       )}
     </>
-  );
-}
-
-function DebugPanel() {
-  const { isOver, setNodeRef } = useDroppable({
-    id: "droppable",
-  });
-
-  const rf = useReactFlow();
-  const fetcher = useFetcher<{
-    nextElementId: string;
-    sessionId: string;
-    input: Pick<ElementNode, "id" | "type" | "data">;
-  }>();
-  const { nodes, edges, selectedNodes } = useSnapshot(graphStore);
-  const [sessionId, setSessionId] = useState("");
-  const params = useParams();
-
-  useEffect(() => {
-    setSessionId(fetcher?.data?.sessionId || "");
-    const node = nodes?.find((n) => n.id === fetcher?.data?.nextElementId);
-    // if (node) setSelectedNodes([node]);
-  }, [fetcher?.data?.sessionId]);
-
-  useEffect(() => {
-    const node = nodes?.find((n) => n.id === fetcher?.data?.nextElementId);
-    // if (node) setSelectedNodes([node]);
-
-    rf.fitView({
-      nodes: [{ id: node?.id }],
-      duration: 500,
-      maxZoom: 1,
-    });
-  }, [fetcher?.data?.nextElementId]);
-
-  const [opened, { toggle }] = useDisclosure(false);
-
-  return (
-    <Card styles={{ root: { overflow: "visible" } }} ref={setNodeRef} w={400}>
-      <Collapse in={opened}>
-        <JsonInput
-          resize="vertical"
-          rows={8}
-          minRows={8}
-          formatOnBlur
-          value={JSON.stringify(rf.toObject(), null, 4)}
-        ></JsonInput>
-        <fetcher.Form method={"POST"} action={`/chat/${params.formId}`}>
-          <input hidden readOnly name={"sessionId"} value={sessionId} />
-          <TextInput label={"Message"} name={"message"} my={"sm"}></TextInput>
-          <Flex justify={"space-between"}>
-            <Group>
-              <Button type={"submit"}>Travel</Button>
-              <Button
-                color={"teal"}
-                onClick={() =>
-                  fetcher.submit(
-                    {
-                      message: "",
-                      config: JSON.stringify({ elements: nodes, edges }),
-                    },
-                    { action: `/chat/${params.formId}`, method: "POST" },
-                  )
-                }
-              >
-                Restart
-              </Button>
-            </Group>
-
-            <Button onClick={() => autoLayout()}>AutoLayout</Button>
-          </Flex>
-        </fetcher.Form>
-        <Text>Current Node Id: {selectedNodes?.[0]?.id}</Text>
-      </Collapse>
-      <Button onClick={() => toggle()}>Toggle Debug</Button>
-    </Card>
   );
 }
 

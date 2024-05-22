@@ -1,15 +1,13 @@
-import { setup, assign, raise } from "xstate";
+import { assign, setup } from "xstate";
 import { ElementNode } from "~/components/collect/elements/config";
 import { Edge, getOutgoers, Node } from "@xyflow/react";
 import {
   ChoiceInputElementData,
+  EdgeData,
   elementsConfig,
   ElementTypes,
 } from "@webble/elements";
 
-type EdgeData = {
-  conditions: { variable: string; cond: "="; value: string }[];
-};
 type Element = Pick<ElementNode | Node<{}, "message">, "type" | "id" | "data">;
 
 type MachineContext = {
@@ -30,45 +28,6 @@ type MachineInput = Pick<
   MachineContext,
   "edges" | "elements" | "message" | "values"
 >;
-
-export const initialState: MachineInput = {
-  start: "node-1",
-  elements: [
-    {
-      id: "node-1",
-      type: "text_input",
-      data: { buttonLabel: "", placeholder: "" },
-    },
-    {
-      id: "node-2",
-      type: "number_input",
-      data: { buttonLabel: "", placeholder: "" },
-    },
-    {
-      id: "node-3",
-      type: "message",
-      data: { buttonLabel: "", placeholder: "" },
-    },
-    {
-      id: "node-4",
-      type: "message",
-      data: { buttonLabel: "", placeholder: "" },
-    },
-  ],
-  edges: [
-    { id: "edge-1", source: "node-1", target: "node-2", data: {} },
-    {
-      id: "edge-2",
-      source: "node-2",
-      target: "node-3",
-      data: {
-        conditions: [{ variable: "animal", cond: "=", value: "Cat" }],
-      },
-    },
-    { id: "edge-3", source: "node-3", target: "node-4", data: {} },
-  ],
-  values: {},
-};
 
 export const chatMachine = setup({
   types: {
@@ -179,13 +138,15 @@ export const chatMachine = setup({
 
         switch (condition.cond) {
           case "=": {
-            console.log(
-              "NOT EQ??",
-              context.values[condition.variable].value,
-              condition.value,
-            );
             passes.push(
               context.values[condition.variable].value == condition.value,
+            );
+
+            break;
+          }
+          case "!=": {
+            passes.push(
+              context.values[condition.variable].value !== condition.value,
             );
 
             break;
@@ -268,6 +229,36 @@ export const chatMachine = setup({
       },
     }),
     resetMessages: assign(() => ({ messages: [] })),
+    updateVariable: assign({
+      values: ({ context, event }) => {
+        if (event.type !== "continueChat") return context.values;
+        console.log({ context });
+
+        const node = context.elements.find(
+          (node) => node.id === context.nextElementId,
+        );
+
+        console.log("SETTING VALUES", event.message);
+        const newValues = { ...context.values };
+        // if a variable is set, assign to the variable
+        if (node?.data.variable && event.message) {
+          newValues[node.data.variable as string] = {
+            value: event.message,
+            type: "variable",
+          };
+        }
+
+        // save value for field
+        if (node && event.message) {
+          newValues[node.id] = {
+            value: event.message,
+            type: "input",
+          };
+        }
+
+        return newValues;
+      },
+    }),
   },
 }).createMachine({
   context: ({ input }) => ({
@@ -275,7 +266,7 @@ export const chatMachine = setup({
     edges: input.edges,
     nextElementId: null,
     message: input.message,
-    values: { a: { type: "variable", value: "b" } },
+    values: input.values,
     messages: [],
   }),
 
@@ -284,7 +275,7 @@ export const chatMachine = setup({
       actions: ["collectMessage", "goToNextElement"],
     },
     continueChat: {
-      actions: ["goToNextElement"],
+      actions: ["updateVariable", "goToNextElement"],
     },
     checkEdge: {
       actions: ["checkEdge"],
