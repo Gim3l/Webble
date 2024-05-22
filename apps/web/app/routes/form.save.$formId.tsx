@@ -11,6 +11,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (_action === "saveStructure") {
     try {
       const structure = JSON.parse(formData.get("structure") as string);
+
+      if (!structure["nodes"]) {
+        return json({ success: false, message: "No nodes provided" });
+      }
+
       // await new Promise((resolve) => setTimeout(resolve, 3000));
       await updateFormStructure.run(client, {
         id: params.formId as string,

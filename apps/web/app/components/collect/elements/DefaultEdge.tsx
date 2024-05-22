@@ -5,12 +5,14 @@ import {
   getBezierPath,
   useReactFlow,
 } from "@xyflow/react";
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, Drawer, Flex, Text, ThemeIcon } from "@mantine/core";
 import {
   IconVariable,
   IconVariableOff,
   IconVariablePlus,
 } from "@tabler/icons-react";
+import { elementsConfig } from "@webble/elements";
+import { useDisclosure } from "@mantine/hooks";
 
 export default function DefaultEdge({
   id,
@@ -24,6 +26,7 @@ export default function DefaultEdge({
   markerEnd,
 }: EdgeProps) {
   // const { setEdges } = useReactFlow();
+  const [opened, { close, open }] = useDisclosure();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -33,12 +36,21 @@ export default function DefaultEdge({
     targetPosition,
   });
 
-  const onEdgeClick = () => {
-    // setEdges((edges) => edges.filter((edge) => edge.id !== id));
-  };
-
   return (
     <>
+      <Drawer
+        opened={opened}
+        position={"left"}
+        size={"xs"}
+        onClose={() => {
+          close();
+        }}
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        title="Edge Conditons"
+      >
+        cool
+      </Drawer>
+
       <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
       <EdgeLabelRenderer>
         <div
@@ -52,7 +64,7 @@ export default function DefaultEdge({
           }}
           className="nodrag nopan"
         >
-          <ActionIcon size={"xs"} variant={"filled"}>
+          <ActionIcon size={"xs"} variant={"filled"} onClick={open}>
             <IconVariable />
           </ActionIcon>
         </div>
