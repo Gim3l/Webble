@@ -19,6 +19,8 @@
     "node": ">=18"
   },
   "dependencies": {
-    "remix-utils": "^7.6.0"
+    "@vercel/remix": "2.9.2-patch.2",
+    "remix-utils": "^7.6.0",
+    "vite": "link:@vercel/remix/vite"
   }
 }
