@@ -1,4 +1,6 @@
 import "@mantine/core/styles.css";
+import nprogress from "nprogress";
+import "nprogress/nprogress.css";
 import {
   isRouteErrorResponse,
   Links,
@@ -7,6 +9,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useNavigation,
   useRouteError,
 } from "@remix-run/react";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
@@ -16,6 +19,8 @@ import "mantine-contextmenu/styles.layer.css";
 import { createTheme, MantineProvider, rem } from "@mantine/core";
 import { json } from "@remix-run/node";
 import { NotFoundPage } from "~/components/layout/404NotFound";
+import "cal-sans";
+import { useEffect } from "react";
 
 const theme = createTheme({
   primaryColor: "indigo",
@@ -85,6 +90,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.state !== "idle" ? nprogress.start() : nprogress.done();
+  }, [navigation.state]);
+
   return <Outlet />;
 }
 

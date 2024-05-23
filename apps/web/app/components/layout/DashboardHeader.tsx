@@ -12,6 +12,7 @@ import {
   rem,
   useMantineTheme,
   Title,
+  Progress,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -41,7 +42,6 @@ const user = {
 const tabs = ["Home"];
 
 export function DashboardHeader() {
-  const theme = useMantineTheme();
   const [opened, { toggle }] = useDisclosure(false);
   const [userMenuOpened, setUserMenuOpened] = useState(false);
 
