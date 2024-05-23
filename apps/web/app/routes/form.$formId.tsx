@@ -23,3 +23,11 @@ export default function WebbleForm() {
     </Flex>
   );
 }
+
+export function shouldRevalidate({ defaultShouldRevalidate }) {
+  // if (whateverConditionsYouCareAbout) {
+  //   return false;
+  // }
+
+  return false;
+}

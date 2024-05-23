@@ -77,7 +77,7 @@ export default function DefaultEdge({
         onClose={() => {
           close();
         }}
-        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        overlayProps={{ backgroundOpacity: 0 }}
         title="Edge Conditons"
       >
         <Box py={"sm"}>

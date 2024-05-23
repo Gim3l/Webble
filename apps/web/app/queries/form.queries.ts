@@ -96,3 +96,28 @@ export const toggleFormVisibility = e.params({ formId: e.uuid }, (p) =>
     ),
   })),
 );
+
+export const getFormSubmissions = e.params({ formId: e.uuid }, (p) =>
+  e.select(e.ChatSession, (session) => {
+    const submissions = e.select(
+      e.json_object_unpack(e.json_get(session.snapshot, "context", "values")),
+    );
+
+    return {
+      id: true,
+      submissions,
+      form: true,
+      filter: e.op(
+        e.op("exists", submissions),
+        "and",
+        e.op(
+          e.op(session.form.id, "=", p.formId),
+          "and",
+          e.op(session.form.user.id, "=", e.global.current_user.id),
+        ),
+      ),
+      //   "and",
+      //
+    };
+  }),
+);

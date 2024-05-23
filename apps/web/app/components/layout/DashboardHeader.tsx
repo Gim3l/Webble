@@ -38,7 +38,7 @@ const user = {
     "https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-5.png",
 };
 
-const tabs = ["Home", "Analytics", "Helpdesk"];
+const tabs = ["Home"];
 
 export function DashboardHeader() {
   const theme = useMantineTheme();

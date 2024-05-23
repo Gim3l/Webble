@@ -15,6 +15,7 @@ import {
   ActionIcon,
   Tooltip,
   Select,
+  rem,
 } from "@mantine/core";
 import { motion } from "framer-motion";
 import {
@@ -31,6 +32,7 @@ import {
   IconArrowsMoveHorizontal,
   IconAutomaticGearbox,
   IconEdit,
+  IconForms,
   IconManualGearbox,
   IconSettings2,
   IconSettingsCog,
@@ -136,7 +138,7 @@ function ElementWrapper({
           close();
           console.log("yoo");
         }}
-        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        overlayProps={{ backgroundOpacity: 0 }}
         title={
           <Flex align={"center"}>
             <ThemeIcon

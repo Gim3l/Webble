@@ -3,7 +3,6 @@ import {
   useMantineTheme,
   useMantineColorScheme,
   Button,
-  TextInput,
   Group,
   Text,
   Title,
@@ -12,44 +11,31 @@ import {
   Tooltip,
   Loader,
   Collapse,
-  JsonInput,
   ThemeIcon,
   List,
   rem,
   Divider,
   Input,
   ScrollArea,
-  Box,
-  Popover,
-  Portal,
   HoverCard,
   CopyButton,
+  Modal,
+  Table,
 } from "@mantine/core";
 import {
   IconArrowBack,
-  IconArrowBackUp,
-  IconArrowForwardUp,
-  IconCapture,
   IconCheck,
   IconCopy,
-  IconFocus,
-  IconFocus2,
   IconFocusCentered,
-  IconGlobe,
-  IconGlobeOff,
-  IconLayersIntersect2,
-  IconLock,
+  IconForms,
   IconMaximize,
   IconMinimize,
   IconRepeat,
-  IconShare,
   IconShare2,
-  IconTarget,
   IconTrash,
   IconVariable,
   IconVariablePlus,
   IconWorld,
-  IconWorldCancel,
   IconWorldX,
   IconZoomIn,
   IconZoomOut,
@@ -73,17 +59,11 @@ import {
   Edge,
   ReactFlowProvider,
   useReactFlow,
-  Controls,
   OnConnectStart,
   OnConnectEnd,
-  Viewport,
-  SelectionMode,
-  OnSelectionChangeFunc,
-  ControlButton,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "~/styles/global.css";
-import { useDroppable } from "@dnd-kit/core";
 import InputElement from "~/components/collect/elements/InputElement";
 import { nanoid } from "nanoid";
 import NumberInputElement from "~/components/collect/elements/NumberInputElement";
@@ -93,8 +73,6 @@ import StartNode from "~/components/collect/elements/StartNode";
 import { useContextMenu } from "mantine-contextmenu";
 import { CollectionNode } from "~/components/collect/GroupNode";
 import {
-  autoLayout,
-  createCollectionNode,
   graphStore,
   onConnect,
   onEdgesChange,
@@ -104,43 +82,34 @@ import {
 } from "~/components/collect/store";
 import ChoiceInputElement from "~/components/collect/elements/ChoiceInputElement";
 import { useSnapshot } from "valtio/react";
-import {
-  Fetcher,
-  Link,
-  useFetcher,
-  useLoaderData,
-  useParams,
-} from "@remix-run/react";
+import { Link, useFetcher, useLoaderData, useParams } from "@remix-run/react";
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import {
   createFormVariable,
   deleteFormVariable,
   getForm,
+  getFormSubmissions,
   toggleFormVisibility,
 } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
-import {
-  useDebouncedCallback,
-  useDisclosure,
-  useStateHistory,
-  useToggle,
-} from "@mantine/hooks";
+import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
 import DefaultEdge from "~/components/collect/elements/DefaultEdge";
-import { ElementNode, ElementTypes } from "@webble/elements";
+import { ElementTypes } from "@webble/elements";
 import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
-import { subscribe } from "valtio";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
   const formId = params.formId as string;
+  const session = auth.getSession(request);
 
-  const form = await getForm.run(dbClient, { id: formId });
+  const form = await getForm.run(session.client, { id: formId });
+  const submissions = await getFormSubmissions.run(session.client, { formId });
 
-  return json({ form, host: process.env.BASE_URL });
+  return json({ form, submissions, host: process.env.BASE_URL });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -684,6 +653,7 @@ function TopCenterPanel() {
               {form?.published ? "Unpublish" : "Publish"}
             </Button>
           </fetcher.Form>
+          <Submissions />
         </Group>
       </Flex>
     </Card>
@@ -776,6 +746,110 @@ function TopLeftPanel() {
           </Text>
         </Flex>
       )}
+    </>
+  );
+}
+
+function Submissions() {
+  const [opened, { close, open }] = useDisclosure();
+  const loaderData = useLoaderData<typeof loader>();
+
+  // const rows = data.map((row) => {
+  //   const totalReviews = row.reviews.negative + row.reviews.positive;
+  //   const positiveReviews = (row.reviews.positive / totalReviews) * 100;
+  //   const negativeReviews = (row.reviews.negative / totalReviews) * 100;
+  //
+  //   return (
+  //       <Table.Tr key={row.title}>
+  //         <Table.Td>
+  //           <Anchor component="button" fz="sm">
+  //             {row.title}
+  //           </Anchor>
+  //         </Table.Td>
+  //         <Table.Td>{row.year}</Table.Td>
+  //         <Table.Td>
+  //           <Anchor component="button" fz="sm">
+  //             {row.author}
+  //           </Anchor>
+  //         </Table.Td>
+  //         <Table.Td>{Intl.NumberFormat().format(totalReviews)}</Table.Td>
+  //         <Table.Td>
+  //           <Group justify="space-between">
+  //             <Text fz="xs" c="teal" fw={700}>
+  //               {positiveReviews.toFixed(0)}%
+  //             </Text>
+  //             <Text fz="xs" c="red" fw={700}>
+  //               {negativeReviews.toFixed(0)}%
+  //             </Text>
+  //           </Group>
+  //           <Progress.Root>
+  //             <Progress.Section
+  //                 className={classes.progressSection}
+  //                 value={positiveReviews}
+  //                 color="teal"
+  //             />
+  //
+  //             <Progress.Section
+  //                 className={classes.progressSection}
+  //                 value={negativeReviews}
+  //                 color="red"
+  //             />
+  //           </Progress.Root>
+  //         </Table.Td>
+  //       </Table.Tr>
+  //   );
+  // });
+
+  const keys = Array.from(
+    new Set(
+      loaderData.submissions
+        .flatMap((session) => session.submissions)
+        .flatMap((i) => i[0]),
+    ),
+  );
+
+  const rows = loaderData.submissions.map((session) => (
+    <Table.Tr key={nanoid()}>
+      {keys.map((key) => (
+        <Table.Td key={`${session.id}-${key}`}>
+          {(
+            session.submissions.find(
+              (submission) => submission?.[0] === key,
+            )?.[1] as { value: string }
+          )?.value || ""}
+        </Table.Td>
+      ))}
+    </Table.Tr>
+  ));
+
+  return (
+    <>
+      <Button
+        size={"xs"}
+        onClick={() => open()}
+        leftSection={<IconForms style={{ width: rem(16), height: rem(16) }} />}
+      >
+        Submissions
+      </Button>
+      <Modal
+        size={"full"}
+        title={"Submissions"}
+        onClose={close}
+        opened={opened}
+      >
+        <Table.ScrollContainer minWidth={800}>
+          <Table verticalSpacing="xs">
+            <Table.Thead>
+              <Table.Tr>
+                {keys.map((item) => (
+                  <Table.Th key={item}>{item}</Table.Th>
+                ))}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>{rows}</Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      </Modal>
     </>
   );
 }
