@@ -31,6 +31,50 @@ export const TYPE_EMAIL_INPUT_ELEMENT = "email_input";
 export const TYPE_CHOICE_INPUT_ELEMENT = "choice_input";
 export const TYPE_TEXT_BUBBLE_ELEMENT = "text_bubble";
 
+export type GroupElement<T extends string = ElementTypes> = (
+  | {
+      type: T;
+      data: T extends typeof TYPE_INPUT_ELEMENT ? InputElementData : never;
+    }
+  | {
+      type: T;
+      data: T extends typeof TYPE_NUMBER_INPUT_ELEMENT
+        ? NumberInputElementData
+        : never;
+    }
+  | {
+      type: T;
+      data: T extends typeof TYPE_EMAIL_INPUT_ELEMENT
+        ? EmailElementData
+        : never;
+    }
+  | {
+      type: T;
+      data: T extends typeof TYPE_CHOICE_INPUT_ELEMENT
+        ? ChoiceInputElementData
+        : never;
+    }
+  | {
+      type: T;
+      data: T extends typeof TYPE_TEXT_BUBBLE_ELEMENT
+        ? TextBubbleElementData
+        : never;
+    }
+) & { groupId: string; id: string };
+
+export type GroupNodeData = {
+  name: string;
+  elements: GroupElement[];
+};
+
+export function isGroupElement(
+  element: unknown,
+): element is GroupElement & { index: number } {
+  return (
+    Object.keys(elementsConfig).indexOf((element as GroupElement).type) !== -1
+  );
+}
+
 export type ElementNode =
   | Node<InputElementData, typeof TYPE_INPUT_ELEMENT>
   | Node<NumberInputElementData, typeof TYPE_NUMBER_INPUT_ELEMENT>

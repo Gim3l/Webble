@@ -1,4 +1,4 @@
-import { TextInput } from "@mantine/core";
+import { Text } from "@mantine/core";
 import { Node, NodeProps } from "@xyflow/react";
 
 import ElementWrapper from "./ElementWrapper";
@@ -16,21 +16,10 @@ function TextBubbleElement(
     <ElementWrapper
       icon={elementsConfig[node.type].icon}
       groupId=""
-      node={node}
+      element={node}
     >
-      <TextInput
-        placeholder="Enter message"
-        variant="filled"
-        className="nodrag"
-        defaultValue={node.data.text}
-        size={"xs"}
-        onChange={(e) => {
-          updateNode<(typeof node)["data"]>(node.id, {
-            ...node.data,
-            text: e.target.value,
-          });
-        }}
-      />
+      {JSON.stringify(node.data)}
+      {node.data.text && <Text c={"gray"}>{node.data.text}</Text>}
     </ElementWrapper>
   );
 }

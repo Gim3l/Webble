@@ -1,90 +1,97 @@
-import { ActionIcon, Box, Flex, FocusTrap, Input } from "@mantine/core";
-import { IconPlus } from "@tabler/icons-react";
-import { updateNode } from "../store";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Card,
+  Flex,
+  FocusTrap,
+  Group,
+  Input,
+  Paper,
+  rem,
+  Stack,
+} from "@mantine/core";
+import { IconQuestionMark } from "@tabler/icons-react";
+import { updateGroupElement } from "../store";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import ElementWrapper from "./ElementWrapper";
 import { TYPE_CHOICE_INPUT_ELEMENT, elementsConfig } from "./config";
 import { nanoid } from "nanoid";
 import { useCallback } from "react";
-import { ChoiceInputElementData } from "@webble/elements";
+import { GroupElement } from "@webble/elements";
+import { op } from "../../../../dbschema/edgeql-js/operators";
+import { ElementHandles } from "~/components/collect/GroupNode";
 
 function ChoiceInputElement(
-  node: NodeProps<
-    Node<ChoiceInputElementData, typeof TYPE_CHOICE_INPUT_ELEMENT>
-  >,
+  element: GroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>,
 ) {
   const deleteOption = useCallback(
     (key: string) => {
-      if (node.data.options.length === 1) return;
-      const items = [...node.data.options.filter((i) => i.id !== key)];
-      updateNode<(typeof node)["data"]>(node.id, {
-        ...node.data,
-        options: items,
+      if (element.data.options.length === 1) return;
+      const items = [...element.data.options.filter((i) => i.id !== key)];
+
+      updateGroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>({
+        ...element,
+        data: {
+          ...element.data,
+          options: items,
+        },
       });
     },
-    [node.data.options],
+    [element.data.options],
   );
 
   const setOption = useCallback(
     (key: string, data: { label: string }) => {
-      const items = [...node.data.options];
+      const items = [...element.data.options];
       const index = items.findIndex((option) => option.id === key);
       items[index] = { ...items[index], ...data };
 
-      updateNode<(typeof node)["data"]>(node.id, {
-        ...node.data,
-        options: items,
+      updateGroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>({
+        ...element,
+        data: {
+          ...element.data,
+          options: items,
+        },
       });
     },
-    [node.data.options],
+    [element.data.options],
   );
 
   const insertAfter = useCallback(
     (key: string) => {
-      const items = [...node.data.options];
+      const items = [...element.data.options];
       const index = items.findIndex((item) => item.id === key);
       items.splice(index + 1, 0, { id: nanoid(), label: "" });
 
-      console.log({ items });
-      updateNode<(typeof node)["data"]>(node.id, {
-        ...node.data,
-        options: items,
+      updateGroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>({
+        ...element,
+        data: {
+          ...element.data,
+          options: items,
+        },
       });
     },
-    [node.data.options],
+    [element.data.options],
   );
 
   return (
     <ElementWrapper
-      key={node.id}
+      key={element.id}
       icon={elementsConfig[TYPE_CHOICE_INPUT_ELEMENT].icon}
       groupId={""}
-      node={node}
-      configEl={<></>}
-    >
-      <FocusTrap active>
-        {node.data.options.map((option) => (
-          <div key={option.id}>
-            <Box
-              style={{ overflow: "visible" }}
-              px="sm"
-              id={"a"}
-              // className={classes.bottomSection}
-              pos={"relative"}
-              w={200}
-            >
-              <div className="webble__inner-handle">
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={option.id}
-                />
-              </div>
-
+      element={element}
+      configEl={
+        <>
+          <Stack
+            px="sm"
+            // className={classes.bottomSection}
+            pos={"relative"}
+          >
+            {element.data.options.map((option) => (
               <Input
-                value={option.label}
-                className="nodrag"
-                pos={"relative"}
+                key={option.id}
+                defaultValue={option.label}
                 onKeyDown={(e) => {
                   if (e.key === "Backspace" && !option?.label) {
                     deleteOption(option.id);
@@ -94,21 +101,46 @@ function ChoiceInputElement(
                   setOption(option.id, { label: e.target.value })
                 }
               ></Input>
-            </Box>
-
-            <Flex justify={"center"} mb={0} pos={"relative"}>
-              <ActionIcon
-                onClick={() => insertAfter(option.id)}
-                mb={0}
-                size={"xs"}
-                variant={"light"}
-              >
-                <IconPlus />
-              </ActionIcon>
-            </Flex>
-          </div>
+            ))}
+          </Stack>
+          <Group justify={"end"}>
+            <Button
+              size={"xs"}
+              mt={"sm"}
+              onClick={() => {
+                insertAfter(
+                  element.data.options[element.data.options.length - 1].id,
+                );
+              }}
+            >
+              Add Choice
+            </Button>
+          </Group>
+        </>
+      }
+    >
+      <Stack gap={"xs"}>
+        {element.data.options.map((option) => (
+          <Box pos={"relative"} key={option.id}>
+            <ElementHandles targetId={option.id} sourceId={option.id} />
+            <Paper withBorder p={"xs"} py={2}>
+              {option.label || (
+                <Group>
+                  <IconQuestionMark
+                    style={{ width: rem(16), height: rem(16) }}
+                  />
+                  <IconQuestionMark
+                    style={{ width: rem(16), height: rem(16) }}
+                  />
+                  <IconQuestionMark
+                    style={{ width: rem(16), height: rem(16) }}
+                  />
+                </Group>
+              )}
+            </Paper>
+          </Box>
         ))}
-      </FocusTrap>
+      </Stack>
     </ElementWrapper>
   );
 }

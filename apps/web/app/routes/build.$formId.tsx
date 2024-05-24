@@ -21,6 +21,7 @@ import {
   CopyButton,
   Modal,
   Table,
+  SimpleGrid,
 } from "@mantine/core";
 import {
   IconArrowBack,
@@ -73,10 +74,13 @@ import StartNode from "~/components/collect/elements/StartNode";
 import { useContextMenu } from "mantine-contextmenu";
 import { CollectionNode } from "~/components/collect/GroupNode";
 import {
+  addNode,
   graphStore,
   onConnect,
   onEdgesChange,
   onNodesChange,
+  removeElementFromGroup,
+  removeEmptyGroups,
   setEdges,
   setNodes,
 } from "~/components/collect/store";
@@ -92,13 +96,26 @@ import {
   toggleFormVisibility,
 } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
-import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useMouse,
+  useMouse,
+} from "@mantine/hooks";
 import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
 import DefaultEdge from "~/components/collect/elements/DefaultEdge";
-import { ElementTypes } from "@webble/elements";
+import {
+  elementsConfig,
+  ElementTypes,
+  GroupNodeData,
+  isGroupElement,
+} from "@webble/elements";
 import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
+import { Block } from "~/components/collect/Block";
+import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import invariant from "tiny-invariant";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
@@ -323,10 +340,9 @@ function Graph({
       >
         {/*<Controls />*/}
         {/*<MiniMap position={"bottom-right"} nodeStrokeWidth={3} />*/}
-        <Panel position={"top-right"}>
-          <Chat></Chat>
-        </Panel>
+        <Panel position={"top-right"}>{/*<Chat></Chat>*/}</Panel>
         <Panel position={"bottom-left"}>
+          <Menu />
           <Variables />
         </Panel>
         <Panel position={"bottom-center"}>
@@ -706,33 +722,6 @@ function TopLeftPanel() {
             >
               Back
             </Button>
-            {/*<Tooltip label={"Undo"}>*/}
-            {/*  <ActionIcon*/}
-            {/*    size={"sm"}*/}
-            {/*    variant={"light"}*/}
-            {/*    onClick={() => {*/}
-            {/*      handlers.back();*/}
-            {/*      setNodes(history.history[history.current - 1].nodes);*/}
-            {/*      setEdges(history.history[history.current - 1].edges);*/}
-            {/*    }}*/}
-            {/*  >*/}
-            {/*    <IconArrowBackUp />*/}
-            {/*  </ActionIcon>*/}
-            {/*</Tooltip>*/}
-
-            {/*<Tooltip label={"Redo"}>*/}
-            {/*  <ActionIcon*/}
-            {/*    size={"sm"}*/}
-            {/*    variant={"light"}*/}
-            {/*    onClick={() => {*/}
-            {/*      handlers.forward();*/}
-            {/*      setNodes(history.history[history.current + 1].nodes);*/}
-            {/*      setEdges(history.history[history.current + 1].edges);*/}
-            {/*    }}*/}
-            {/*  >*/}
-            {/*    <IconArrowForwardUp />*/}
-            {/*  </ActionIcon>*/}
-            {/*</Tooltip>*/}
           </Group>
           <Title order={4}>{loaderData.form?.name}</Title>
         </Flex>
@@ -753,52 +742,6 @@ function TopLeftPanel() {
 function Submissions() {
   const [opened, { close, open }] = useDisclosure();
   const loaderData = useLoaderData<typeof loader>();
-
-  // const rows = data.map((row) => {
-  //   const totalReviews = row.reviews.negative + row.reviews.positive;
-  //   const positiveReviews = (row.reviews.positive / totalReviews) * 100;
-  //   const negativeReviews = (row.reviews.negative / totalReviews) * 100;
-  //
-  //   return (
-  //       <Table.Tr key={row.title}>
-  //         <Table.Td>
-  //           <Anchor component="button" fz="sm">
-  //             {row.title}
-  //           </Anchor>
-  //         </Table.Td>
-  //         <Table.Td>{row.year}</Table.Td>
-  //         <Table.Td>
-  //           <Anchor component="button" fz="sm">
-  //             {row.author}
-  //           </Anchor>
-  //         </Table.Td>
-  //         <Table.Td>{Intl.NumberFormat().format(totalReviews)}</Table.Td>
-  //         <Table.Td>
-  //           <Group justify="space-between">
-  //             <Text fz="xs" c="teal" fw={700}>
-  //               {positiveReviews.toFixed(0)}%
-  //             </Text>
-  //             <Text fz="xs" c="red" fw={700}>
-  //               {negativeReviews.toFixed(0)}%
-  //             </Text>
-  //           </Group>
-  //           <Progress.Root>
-  //             <Progress.Section
-  //                 className={classes.progressSection}
-  //                 value={positiveReviews}
-  //                 color="teal"
-  //             />
-  //
-  //             <Progress.Section
-  //                 className={classes.progressSection}
-  //                 value={negativeReviews}
-  //                 color="red"
-  //             />
-  //           </Progress.Root>
-  //         </Table.Td>
-  //       </Table.Tr>
-  //   );
-  // });
 
   const keys = Array.from(
     new Set(
@@ -851,6 +794,103 @@ function Submissions() {
         </Table.ScrollContainer>
       </Modal>
     </>
+  );
+}
+
+function Menu() {
+  const reactFlow = useReactFlow();
+
+  useEffect(() => {
+    const pane = document.querySelector(".react-flow__pane");
+
+    invariant(pane);
+    invariant(reactFlow);
+
+    return dropTargetForElements({
+      element: pane,
+      onDrop({ source, location }) {
+        if (location.current.dropTargets.length > 1) return;
+
+        const position = reactFlow.screenToFlowPosition({
+          // bring element directly under the mouse by shifting it slightly
+          x: location.current.input.pageX - 50,
+          y: location.current.input.pageY - 50,
+        });
+
+        // check if source has a group id, if so remove it from the group
+        if (source.data.groupId && isGroupElement(source.data)) {
+          removeElementFromGroup(source.data.groupId, source.data.id);
+          removeEmptyGroups();
+          // groupId
+          const groupId = nanoid();
+          addNode<Node<GroupNodeData>>({
+            id: groupId,
+            type: "collection",
+            position,
+            data: {
+              name: "Something random",
+              elements: [{ ...source.data, groupId }],
+            },
+          });
+        }
+
+        // add new groups from source
+        if (isGroupElement(source.data) && !source.data.groupId) {
+          const groupId = nanoid();
+
+          removeElementFromGroup(source.data.groupId, source.data.id);
+          addNode<Node<GroupNodeData>>({
+            id: groupId,
+            type: "collection",
+            position,
+            data: {
+              name: "Something random",
+              elements: [{ ...source.data, groupId }],
+            },
+          });
+        }
+
+        // reactFlow.setNodes([
+        //   ...reactFlow.getNodes(),
+        //   {
+        //     id: nanoid(),
+        //     position,
+        //     data: {
+        //       name: "Hello world",
+        //       elements: [
+        //         {
+        //           id: nanoid(),
+        //           type: "text_bubble",
+        //           data: { text: "This is nice" },
+        //         },
+        //         {
+        //           id: nanoid(),
+        //           type: "text_bubble",
+        //           data: { text: "This is nice too" },
+        //         },
+        //       ],
+        //     } satisfies GroupNodeData,
+        //     type: "collection",
+        //   },
+        // ]);
+      },
+    });
+  }, []);
+
+  return (
+    <Card>
+      <SimpleGrid cols={2}>
+        {Object.entries(elementsConfig).map(([key, value]) => (
+          <Block
+            name={value.name}
+            type={key as ElementTypes}
+            icon={value.icon}
+            initialData={value.default}
+            key={key}
+          />
+        ))}
+      </SimpleGrid>
+    </Card>
   );
 }
 

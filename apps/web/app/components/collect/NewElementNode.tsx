@@ -12,7 +12,12 @@ import { Handle, NodeProps, Position, Node } from "@xyflow/react";
 import { createElementNode } from "./store";
 import { nanoid } from "nanoid";
 import { useMemo } from "react";
-import { elementsConfig, ElementTypes, NewNodeData } from "@webble/elements";
+import {
+  elementsConfig,
+  ElementTypes,
+  GroupElement,
+  NewNodeData,
+} from "@webble/elements";
 
 export function NewElementNode(node: NodeProps<Node<NewNodeData, "new">>) {
   const data = useMemo(() => {
@@ -69,9 +74,20 @@ export function NewElementNode(node: NodeProps<Node<NewNodeData, "new">>) {
               onChange={(v) => {
                 createElementNode(
                   {
-                    type: v as ElementTypes,
-                    data: elementsConfig[v as ElementTypes].default,
-                    id: nanoid(),
+                    type: "collection",
+                    data: {
+                      name: "Group",
+                      elements: [
+                        {
+                          id: nanoid(),
+                          type: v as ElementTypes,
+                          data: elementsConfig[v as ElementTypes].default,
+                          index: 0,
+                          groupId: node.id,
+                        } satisfies GroupElement,
+                      ],
+                    },
+                    id: node.id,
                     position: {
                       x: node.positionAbsoluteX,
                       y: node.positionAbsoluteY,

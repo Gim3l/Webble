@@ -12,11 +12,15 @@ import {
   useNavigation,
   useRouteError,
 } from "@remix-run/react";
-import { ColorSchemeScript, MantineProvider } from "@mantine/core";
+import {
+  createTheme,
+  rem,
+  ColorSchemeScript,
+  MantineProvider,
+} from "@mantine/core";
 import { ContextMenuProvider } from "mantine-contextmenu";
 import "mantine-contextmenu/styles.layer.css";
 
-import { createTheme, MantineProvider, rem } from "@mantine/core";
 import { json } from "@remix-run/node";
 import { NotFoundPage } from "~/components/layout/404NotFound";
 import "cal-sans";

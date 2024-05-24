@@ -1,105 +1,137 @@
-import { Flex, NumberInput, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Flex, NumberInput, Stack, Text, TextInput } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
-import { Node, NodeProps } from "@xyflow/react";
-import { updateNode } from "~/components/collect/store";
+import { Handle, Position } from "@xyflow/react";
+import { updateGroupElement } from "~/components/collect/store";
 import {
-  NumberInputElementData,
   TYPE_NUMBER_INPUT_ELEMENT,
   elementsConfig,
+  GroupElement,
+  TYPE_INPUT_ELEMENT,
 } from "@webble/elements";
+import { useEffect, useRef } from "react";
+import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import invariant from "tiny-invariant";
 
 function NumberInputElement(
-  node: NodeProps<
-    Node<NumberInputElementData, typeof TYPE_NUMBER_INPUT_ELEMENT>
-  >,
+  element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
 ) {
+  const ref = useRef<HTMLDivElement>(null);
+  console.log("THIS CHANGED");
+
+  useEffect(() => {
+    invariant(ref.current);
+
+    return draggable({
+      element: ref.current,
+      canDrag() {
+        return false;
+      },
+    });
+  }, [ref]);
   return (
-    <ElementWrapper
-      groupId=""
-      key={node.id}
-      node={node}
-      icon={elementsConfig[TYPE_NUMBER_INPUT_ELEMENT].icon}
-      configEl={
-        <Stack gap="sm">
-          <TextInput
-            label="Placeholder"
-            placeholder="Enter field placeholder"
-            variant="filled"
-            defaultValue={node.data.placeholder}
-            onChange={(e) =>
-              updateNode<(typeof node)["data"]>(node.id, {
-                ...node.data,
-                placeholder: e.target.value,
-              })
-            }
-          />
+    <Box pos={"relative"}>
+      <div ref={ref}>
+        <Handle
+          type={"target"}
+          style={{ left: 0 }}
+          position={Position.Left}
+          id={element.id}
+        ></Handle>
+        <Handle
+          type={"source"}
+          style={{ right: 0 }}
+          position={Position.Right}
+          id={element.id}
+        ></Handle>
+      </div>
 
-          <TextInput
-            label="Button Label"
-            defaultValue={node.data.buttonLabel}
-            placeholder="Enter field placeholder"
-            variant="filled"
-            onChange={(e) =>
-              updateNode<(typeof node)["data"]>(node.id, {
-                ...node.data,
-                buttonLabel: e.target.value,
-              })
-            }
-          />
+      <ElementWrapper
+        groupId=""
+        key={element.id}
+        element={element}
+        icon={elementsConfig[TYPE_NUMBER_INPUT_ELEMENT].icon}
+        configEl={
+          <Stack gap="sm">
+            <TextInput
+              label="Placeholder"
+              placeholder="Enter field placeholder"
+              variant="filled"
+              defaultValue={element.data.placeholder}
+              onChange={(e) =>
+                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, placeholder: e.target.value },
+                })
+              }
+            />
 
-          <NumberInput
-            label="Min"
-            defaultValue={node.data.min}
-            placeholder="Enter minimum value"
-            variant="filled"
-            stepHoldDelay={500}
-            stepHoldInterval={100}
-            onChange={(v) =>
-              updateNode<(typeof node)["data"]>(node.id, {
-                ...node.data,
-                min: Number(v),
-              })
-            }
-          />
+            <TextInput
+              label="Button Label"
+              defaultValue={element.data.buttonLabel}
+              placeholder="Enter field placeholder"
+              variant="filled"
+              onChange={(e) =>
+                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, buttonLabel: e.target.value },
+                })
+              }
+            />
 
-          <NumberInput
-            label="Max"
-            defaultValue={node.data.max}
-            placeholder="Enter maximum value"
-            variant="filled"
-            stepHoldDelay={500}
-            stepHoldInterval={100}
-            onChange={(v) =>
-              updateNode<(typeof node)["data"]>(node.id, {
-                ...node.data,
-                max: Number(v),
-              })
-            }
-          />
+            <NumberInput
+              label="Min"
+              defaultValue={element.data.min}
+              placeholder="Enter minimum value"
+              variant="filled"
+              stepHoldDelay={500}
+              stepHoldInterval={100}
+              onChange={(v) =>
+                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, min: Number(v) },
+                })
+              }
+            />
 
-          <NumberInput
-            label="Step"
-            defaultValue={node.data.step}
-            placeholder="Step count"
-            variant="filled"
-            stepHoldDelay={500}
-            stepHoldInterval={100}
-            onChange={(v) =>
-              updateNode<(typeof node)["data"]>(node.id, {
-                ...node.data,
-                step: Number(v),
-              })
-            }
-          />
-        </Stack>
-      }
-    >
-      {node.data.placeholder && (
-        <Flex gap="sm">
-          <Text c={"gray"}>{node.data.placeholder}</Text>
-        </Flex>
-      )}
-    </ElementWrapper>
+            <NumberInput
+              label="Max"
+              defaultValue={element.data.max}
+              placeholder="Enter maximum value"
+              variant="filled"
+              stepHoldDelay={500}
+              stepHoldInterval={100}
+              onChange={(v) =>
+                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, max: Number(v) },
+                })
+              }
+            />
+
+            <NumberInput
+              label="Step"
+              defaultValue={element.data.step}
+              placeholder="Step count"
+              variant="filled"
+              stepHoldDelay={500}
+              stepHoldInterval={100}
+              onChange={(v) =>
+                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, step: Number(v) },
+                })
+              }
+            />
+          </Stack>
+        }
+      >
+        {element.data.placeholder && (
+          <Flex gap="sm">
+            <Text c={"gray"}>{element.data.placeholder}</Text>
+          </Flex>
+        )}
+      </ElementWrapper>
+    </Box>
   );
 }
 

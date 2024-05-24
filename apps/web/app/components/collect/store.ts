@@ -12,20 +12,26 @@ import {
 import { nanoid } from "nanoid";
 import { layoutD3DAG } from "~/components/collect/utils/node/algorithms/d3-dag";
 import { proxy } from "valtio";
-import { EdgeData, ElementNode } from "@webble/elements";
-
-export type GroupNodeData = { name: string };
+import {
+  EdgeData,
+  ElementNode,
+  ElementTypes,
+  GroupElement,
+  GroupNodeData,
+} from "@webble/elements";
 
 export const graphStore = proxy<{
-  nodes: Node[];
+  nodes: Node<GroupNodeData, "collection">[];
   edges: Edge<EdgeData>[];
   movingNodeId: string | null;
   selectedNodeId: string | null;
   selectedNodes: Node[];
   currentPopoverId: string | null;
   isDraggingNode: boolean;
+  allowElementDrag: boolean;
 }>({
   movingNodeId: null,
+  allowElementDrag: true,
   selectedNodeId: null,
   isDraggingNode: false,
   selectedNodes: [],
@@ -107,11 +113,14 @@ export function updateNode<T extends Record<string, any>>(id: string, data: T) {
 }
 
 export function createElementNode(
-  node: Pick<ElementNode, "id" | "type" | "data" | "position">,
+  node: Pick<Node<GroupNodeData>, "id" | "type" | "data" | "position">,
   placeholderId: string,
 ) {
+  if (!placeholderId) return (graphStore.nodes = [...graphStore.nodes, node]);
+
   console.log({ node, placeholderId });
   graphStore.nodes = graphStore.nodes.filter((n) => n.id !== placeholderId);
+
   const edge = graphStore.edges.find((edge) => edge.target === placeholderId);
   if (!edge) return;
 
@@ -319,6 +328,104 @@ export function removeEdgeCondition(id: string, condId: string) {
     }
     return edge;
   });
+}
+
+function isGroupNode(node: Node): node is Node<GroupNodeData, "collection"> {
+  return node.type === "collection";
+}
+
+export function addNode<T extends Node>(node: T) {
+  graphStore.nodes = [...graphStore.nodes, node];
+}
+
+export function updateGroupElement<T extends ElementTypes>(
+  element: GroupElement<T>,
+) {
+  if (!element.groupId) return;
+
+  graphStore.nodes = graphStore.nodes.map((node) => {
+    if (node.id === element.groupId && isGroupNode(node)) {
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          elements: node.data.elements.map((el) => {
+            if (el.id === element.id) {
+              return element;
+            }
+
+            return el;
+          }),
+        },
+      };
+    }
+
+    return node;
+  });
+}
+
+export function addElementToGroup(
+  groupId: string,
+  element: GroupElement & { index?: number },
+  // option position in which element should be added
+  index?: number,
+) {
+  const oldGroupId = element.groupId;
+  graphStore.nodes = graphStore.nodes.map((node) => {
+    if (node.id !== groupId || !isGroupNode(node)) return node;
+
+    const elements = [...node.data.elements];
+
+    if (index === 0 || index) {
+      elements.splice(index, 0, { ...element, groupId, id: element.id, index });
+    } else {
+      elements.push({ ...element, groupId, id: element.id });
+    }
+
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        elements,
+      },
+    };
+  });
+
+  // change source id for element's edges
+  // because an edge is really bound to a node and not an element
+  graphStore.edges = graphStore.edges.map((edge) => {
+    const newEdge = { ...edge, id: nanoid() };
+
+    if (edge.source === oldGroupId || edge.target === oldGroupId) {
+      if (edge.source === oldGroupId) newEdge.source = groupId;
+      if (edge.target === oldGroupId) newEdge.target = groupId;
+      return newEdge;
+    }
+
+    return edge;
+  });
+}
+
+// #### GROUP BASED STUF
+export function removeElementFromGroup(groupId: string, elementId: string) {
+  graphStore.nodes = graphStore.nodes.map((node) => {
+    if (node.id !== groupId) return node;
+    if (!isGroupNode(node)) return node;
+
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        elements: node.data.elements.filter((el) => el.id !== elementId),
+      },
+    } satisfies Node<GroupNodeData>;
+  });
+}
+
+export function removeEmptyGroups() {
+  graphStore.nodes = graphStore.nodes.filter((node) =>
+    node.type === "collection" ? !!node.data.elements.length : !!node,
+  );
 }
 
 declare module "valtio" {
