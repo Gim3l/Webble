@@ -48,7 +48,6 @@
     "postcss": "^8.4.38",
     "postcss-preset-mantine": "^1.15.0",
     "postcss-simple-vars": "^7.0.1",
-    "pragmatic-drag-and-drop-flourish": "link:@atlaskit/pragmatic-drag-and-drop-flourish",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remix-utils": "^7.6.0",
