@@ -85,6 +85,7 @@ import {
   onConnect,
   onEdgesChange,
   onNodesChange,
+  remapElementEdges,
   removeElementFromGroup,
   removeEmptyGroups,
   setEdges,
@@ -476,6 +477,7 @@ export function Chat() {
         <Card w={400}>
           <ScrollArea h={500} viewportRef={viewport}>
             <webble-chatbox
+              key={params.formId}
               ref={chatboxRef}
               formId={params.formId}
               style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
@@ -849,15 +851,16 @@ function Menu() {
           removeEmptyGroups();
           // groupId
           const groupId = nanoid();
+          const element = { ...source.data, index: 0 };
           addNode<Node<GroupNodeData>>({
             id: groupId,
             type: "collection",
             position,
             data: {
-              name: "Something random",
-              elements: [{ ...source.data, groupId }],
+              elements: [{ ...element, groupId }],
             },
           });
+          remapElementEdges(groupId, element);
         }
 
         // add new groups from source
@@ -870,7 +873,6 @@ function Menu() {
             type: "collection",
             position,
             data: {
-              name: "Something random",
               elements: [{ ...source.data, groupId, index: 0 }],
             },
           });

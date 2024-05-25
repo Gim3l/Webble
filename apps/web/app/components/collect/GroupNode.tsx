@@ -50,6 +50,7 @@ import {
 } from "~/components/collect/store";
 import classes from "./GroupNode.module.css";
 import { useFocusWithin } from "@mantine/hooks";
+import { indexOf } from "effect/String";
 
 export function CollectionNode(
   node: NodeProps<Node<GroupNodeData, "container">>,
@@ -120,10 +121,26 @@ export function CollectionNode(
 
         const closestEdgeOfTarget = extractClosestEdge(targetData);
 
+        let indexOfTarget = node.data.elements.findIndex(
+          (item) => item.id === targetData.id,
+        );
+
         // handle moving items between groups
         if (sourceData.groupId !== targetData.groupId) {
+          const targetGroup = reactFlow
+            .getNodes()
+            .find((node) => node.id === targetData.groupId);
+
+          if (!targetGroup) return;
+
+          indexOfTarget = targetGroup.data.elements.findIndex(
+            (item) => item.id === targetData.id,
+          );
+
+          // alert(targetData.index);
           if (closestEdgeOfTarget === "top") {
-            addElementToGroup(targetData.groupId, sourceData, targetData.index);
+            addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
+
             removeElementFromGroup(sourceData.groupId, sourceData.id);
             removeEmptyGroups();
           }
@@ -132,7 +149,8 @@ export function CollectionNode(
             addElementToGroup(
               targetData.groupId,
               sourceData,
-              targetData.index + 1,
+              indexOfTarget + 1,
+              // targetData.index + 1,
             );
             removeElementFromGroup(sourceData.groupId, sourceData.id);
             removeEmptyGroups();
@@ -141,9 +159,6 @@ export function CollectionNode(
           return;
         }
 
-        const indexOfTarget = node.data.elements.findIndex(
-          (item) => item.id === targetData.id,
-        );
         if (indexOfTarget < 0) {
           return;
         }

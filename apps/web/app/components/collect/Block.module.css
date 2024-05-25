@@ -1,9 +1,9 @@
 .root {
   cursor: grab;
   padding: 8px;
-  transition: 0.1s linear;
+  transition: 0.05s ease-in-out;
 }
 .root:hover {
   box-shadow: var(--mantine-shadow-lg);
-  border-color: transparent;
+  border-color: var(--mantine-primary-color-filled);
 }

@@ -14,6 +14,7 @@ import { layoutD3DAG } from "~/components/collect/utils/node/algorithms/d3-dag";
 import { proxy } from "valtio";
 import {
   EdgeData,
+  elementHasOptions,
   ElementNode,
   ElementTypes,
   GroupElement,
@@ -335,6 +336,7 @@ function isGroupNode(node: Node): node is Node<GroupNodeData, "collection"> {
 }
 
 export function addNode<T extends Node>(node: T) {
+  if (!node.data.name) node.data.name = `Group #${graphStore.nodes.length}`;
   graphStore.nodes = [...graphStore.nodes, node];
 }
 
@@ -370,14 +372,13 @@ export function addElementToGroup(
   // option position in which element should be added
   index?: number,
 ) {
-  const oldGroupId = element.groupId;
   graphStore.nodes = graphStore.nodes.map((node) => {
     if (node.id !== groupId || !isGroupNode(node)) return node;
 
     const elements = [...node.data.elements];
 
     if (index === 0 || index) {
-      elements.splice(index, 0, { ...element, groupId, id: element.id, index });
+      elements.splice(index, 0, { ...element, groupId, id: element.id });
     } else {
       elements.push({ ...element, groupId, id: element.id });
     }
@@ -391,15 +392,29 @@ export function addElementToGroup(
     };
   });
 
+  remapElementEdges(groupId, element);
+}
+
+// remap edges after element is moved from one group to another
+export function remapElementEdges(groupId: string, element: GroupElement) {
+  const oldGroupId = element.groupId;
   // change source id for element's edges
   // because an edge is really bound to a node and not an element
   graphStore.edges = graphStore.edges.map((edge) => {
-    const newEdge = { ...edge, id: nanoid() };
+    const newEdge = { ...edge };
 
-    if (edge.source === oldGroupId || edge.target === oldGroupId) {
-      if (edge.source === oldGroupId) newEdge.source = groupId;
-      if (edge.target === oldGroupId) newEdge.target = groupId;
+    if (edge.source === oldGroupId && edge.sourceHandle === element.id) {
+      newEdge.source = groupId;
       return newEdge;
+    }
+
+    if (elementHasOptions(element)) {
+      for (const option of element.data.options) {
+        if (edge.source === oldGroupId && edge.sourceHandle === option.id) {
+          newEdge.source = groupId;
+          return newEdge;
+        }
+      }
     }
 
     return edge;
@@ -408,6 +423,7 @@ export function addElementToGroup(
 
 // #### GROUP BASED STUF
 export function removeElementFromGroup(groupId: string, elementId: string) {
+  console.log("REMOVING ELEMENTS");
   graphStore.nodes = graphStore.nodes.map((node) => {
     if (node.id !== groupId) return node;
     if (!isGroupNode(node)) return node;

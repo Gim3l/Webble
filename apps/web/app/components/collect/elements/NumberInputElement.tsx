@@ -6,7 +6,6 @@ import {
   TYPE_NUMBER_INPUT_ELEMENT,
   elementsConfig,
   GroupElement,
-  TYPE_INPUT_ELEMENT,
 } from "@webble/elements";
 import { useEffect, useRef } from "react";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -16,7 +15,6 @@ function NumberInputElement(
   element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
 ) {
   const ref = useRef<HTMLDivElement>(null);
-  console.log("THIS CHANGED " + element.id);
 
   useEffect(() => {
     invariant(ref.current);

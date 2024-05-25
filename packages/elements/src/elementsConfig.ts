@@ -75,6 +75,15 @@ export function isGroupElement<T extends ElementTypes>(
   );
 }
 
+// elements with choices
+export function elementHasOptions<T extends ElementTypes>(
+  element: unknown,
+): element is GroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT> & {
+  index: number;
+} {
+  return Object.keys((element as GroupElement).data).indexOf("options") !== -1;
+}
+
 export function isFromInputsGroup(element: unknown): element is GroupElement & {
   index: number;
   sent?: { type: "text"; value: string };
