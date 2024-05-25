@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
-import { Text, Card, Group, ThemeIcon } from "@mantine/core";
+import { Text, Card, Group, ThemeIcon, Paper } from "@mantine/core";
 import { Icon } from "@tabler/icons-react";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { ElementTypes, GroupElement } from "@webble/elements";
 import { nanoid } from "nanoid";
+import classes from "./Block.module.css";
 
 export function Block({
   type,
@@ -41,13 +42,20 @@ export function Block({
   }, []);
 
   return (
-    <Card shadow={"none"} ref={ref} opacity={isDragging ? 0.5 : 1}>
+    <Paper
+      ref={ref}
+      withBorder
+      opacity={isDragging ? 0.5 : 1}
+      classNames={{ root: classes.root }}
+    >
       <Group>
         <ThemeIcon size={"xs"}>
           <Icon />
         </ThemeIcon>{" "}
-        <Text>{name}</Text>
+        <Text fw={500} fz={"sm"}>
+          {name}
+        </Text>
       </Group>
-    </Card>
+    </Paper>
   );
 }

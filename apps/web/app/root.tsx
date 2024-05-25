@@ -1,6 +1,7 @@
 import "@mantine/core/styles.css";
 import nprogress from "nprogress";
 import "nprogress/nprogress.css";
+import "@mantine/notifications/styles.css";
 import {
   isRouteErrorResponse,
   Links,
@@ -25,6 +26,7 @@ import { json } from "@remix-run/node";
 import { NotFoundPage } from "~/components/layout/404NotFound";
 import "cal-sans";
 import { useEffect } from "react";
+import { Notifications } from "@mantine/notifications";
 
 const theme = createTheme({
   primaryColor: "indigo",
@@ -84,6 +86,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <div id="main"></div>
         <MantineProvider defaultColorScheme="dark" theme={theme}>
+          <Notifications />
           <ContextMenuProvider>{children}</ContextMenuProvider>
         </MantineProvider>
         <ScrollRestoration />

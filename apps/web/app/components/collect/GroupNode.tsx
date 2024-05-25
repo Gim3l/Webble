@@ -1,12 +1,4 @@
-import {
-  Box,
-  Card,
-  Title,
-  isLightColor,
-  useMantineTheme,
-  Divider,
-  Stack,
-} from "@mantine/core";
+import { Box, Card, Divider, Stack, Input, rem } from "@mantine/core";
 import {
   Handle,
   Node,
@@ -56,12 +48,20 @@ import {
   removeElementFromGroup,
   removeEmptyGroups,
 } from "~/components/collect/store";
+import classes from "./GroupNode.module.css";
+import { useFocusWithin } from "@mantine/hooks";
 
 export function CollectionNode(
   node: NodeProps<Node<GroupNodeData, "container">>,
 ) {
   const reactFlow = useReactFlow<Node<GroupNodeData, "container">>();
   const ref = useRef(null);
+  const { ref: titleInputRef, focused } = useFocusWithin();
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setIsEditing(false);
+  }, [focused]);
 
   const reorderItem = useCallback(
     ({
@@ -167,10 +167,20 @@ export function CollectionNode(
       <Handle type="target" position={Position.Left} id={node.id} />
       <Handle type="source" position={Position.Right} id={node.id} />
       <Card withBorder w={260} ref={ref}>
-        <Title order={4}>{node.data.name}</Title>
+        <Input
+          ref={titleInputRef}
+          onClick={() => setIsEditing(true)}
+          className={isEditing ? "nodrag" : ""}
+          defaultValue={node.data.name}
+          classNames={{ wrapper: classes.inputWrapper, input: classes.input }}
+          styles={{
+            wrapper: { margin: 0 },
+            input: {},
+          }}
+        />
 
-        <Divider />
-        <Stack pt={"sm"} gap={2}>
+        <Divider my={"xs"} />
+        <Stack gap={2}>
           {node.data.elements.map((el, index) => (
             <GroupItem groupId={node.id} key={el.id} index={index} data={el} />
           ))}

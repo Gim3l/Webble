@@ -13,6 +13,7 @@ import {
   useMantineTheme,
   Title,
   Progress,
+  Button,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -54,61 +55,26 @@ export function DashboardHeader() {
   return (
     <div className={classes.header}>
       <Container className={classes.mainSection} size="xl">
-        <Group justify="space-between">
+        <Group justify="space-between" align={"center"}>
           <Title order={4}>Webble</Title>
 
           <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
 
-          <Menu
-            width={260}
-            position="bottom-end"
-            transitionProps={{ transition: "pop-top-right" }}
-            onClose={() => setUserMenuOpened(false)}
-            onOpen={() => setUserMenuOpened(true)}
-            withinPortal
+          <Button
+            color="red"
+            component={Link}
+            size={"xs"}
+            variant={"light"}
+            to={"/logout"}
+            leftSection={
+              <IconLogout2
+                style={{ width: rem(16), height: rem(16) }}
+                stroke={1.5}
+              />
+            }
           >
-            <Menu.Target>
-              <UnstyledButton
-                className={cx(classes.user, {
-                  [classes.userActive]: userMenuOpened,
-                })}
-              >
-                <Group gap={7}>
-                  <Avatar
-                    src={user.image}
-                    alt={user.name}
-                    radius="xl"
-                    size={20}
-                  />
-                  <Text fw={500} size="sm" lh={1} mr={3}>
-                    {user.name}
-                  </Text>
-                  <IconChevronDown
-                    style={{ width: rem(12), height: rem(12) }}
-                    stroke={1.5}
-                  />
-                </Group>
-              </UnstyledButton>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {/*<Menu.Divider />*/}
-
-              {/*<Menu.Label>Danger zone</Menu.Label>*/}
-              <Menu.Item
-                color="red"
-                component={Link}
-                to={"/logout"}
-                leftSection={
-                  <IconLogout2
-                    style={{ width: rem(16), height: rem(16) }}
-                    stroke={1.5}
-                  />
-                }
-              >
-                Logout
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+            Logout
+          </Button>
         </Group>
       </Container>
       <Container size="xl">

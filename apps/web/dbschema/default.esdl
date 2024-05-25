@@ -25,6 +25,7 @@ module default {
         constraint min_len_value(2);
     };
     required structure: json;
+    color: str;
     required user: User;
     published: bool {
         default := false;
@@ -61,14 +62,25 @@ module default {
   }
 
   type ChatSession {
-    state: json;
     form: Form {
         on target delete delete source;
     };
-    snapshot: json;
+    values: json;
+    history := .<session[is ChatHistory];
 
     created_at: datetime {
         rewrite insert using (datetime_of_statement())
+    }
+  }
+
+  type ChatHistory {
+    required session: ChatSession {
+        on target delete delete source;
+    };
+    captures: json;
+    message: str;
+    created_at: datetime {
+            rewrite insert using (datetime_of_statement())
     }
   }
 }

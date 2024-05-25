@@ -22,6 +22,9 @@ import {
   Modal,
   Table,
   SimpleGrid,
+  Box,
+  VisuallyHidden,
+  Drawer,
 } from "@mantine/core";
 import {
   IconArrowBack,
@@ -29,8 +32,11 @@ import {
   IconCopy,
   IconFocusCentered,
   IconForms,
+  IconInfoCircle,
   IconMaximize,
   IconMinimize,
+  IconPlayerPlay,
+  IconPlayerPlayFilled,
   IconRepeat,
   IconShare2,
   IconTrash,
@@ -87,7 +93,12 @@ import {
 import ChoiceInputElement from "~/components/collect/elements/ChoiceInputElement";
 import { useSnapshot } from "valtio/react";
 import { Link, useFetcher, useLoaderData, useParams } from "@remix-run/react";
-import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  json,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "@remix-run/node";
 import {
   createFormVariable,
   deleteFormVariable,
@@ -116,17 +127,23 @@ import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
 import { Block } from "~/components/collect/Block";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
+import { HeadersFunction } from "@vercel/remix";
+import { getFormChatSessions } from "~/queries/chat.queries";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: data.form?.name + " | Webble" }];
+};
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const formId = params.formId as string;
   const session = auth.getSession(request);
 
   const form = await getForm.run(session.client, { id: formId });
-  const submissions = await getFormSubmissions.run(session.client, { formId });
+  const sessions = await getFormChatSessions.run(session.client, { formId });
 
-  return json({ form, submissions, host: process.env.BASE_URL });
+  return json({ form, sessions, host: process.env.BASE_URL });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -340,9 +357,10 @@ function Graph({
       >
         {/*<Controls />*/}
         {/*<MiniMap position={"bottom-right"} nodeStrokeWidth={3} />*/}
-        <Panel position={"top-right"}>{/*<Chat></Chat>*/}</Panel>
+        <Panel position={"top-right"}>
+          <Chat></Chat>
+        </Panel>
         <Panel position={"bottom-left"}>
-          <Menu />
           <Variables />
         </Panel>
         <Panel position={"bottom-center"}>
@@ -368,6 +386,9 @@ function Graph({
         </Panel>
         <Panel position={"top-left"}>
           <TopLeftPanel />
+          <Box mt={100}>
+            <Menu />
+          </Box>
         </Panel>
         <Panel position={"top-center"}>
           <TopCenterPanel />
@@ -415,45 +436,54 @@ export function Chat() {
       });
   }, [chatboxRef.current]);
 
-  const [opened, { toggle }] = useDisclosure(true);
+  const [opened, { toggle, open, close }] = useDisclosure();
 
   return (
-    <Card w={400}>
-      <Group justify={"space-between"} align={"start"}>
-        <Title order={4}>Chat</Title>
-        <Tooltip label={opened ? "Minimize" : "Maximize"}>
-          <ActionIcon size={"xs"} onClick={toggle}>
-            {opened ? <IconMinimize /> : <IconMaximize />}
-          </ActionIcon>
-        </Tooltip>
-      </Group>
+    <Flex justify={"end"} direction={"column"}>
+      <Card>
+        <Button
+          size={"xs"}
+          onClick={() => open()}
+          color={"teal"}
+          leftSection={
+            <IconPlayerPlay style={{ width: rem(16), height: rem(16) }} />
+          }
+        >
+          Run Test
+        </Button>
+      </Card>
 
-      <Divider />
-
-      <Collapse in={opened}>
-        <ScrollArea h={500} viewportRef={viewport}>
-          <webble-chatbox
-            ref={chatboxRef}
-            formId={params.formId}
-            style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
-          />
-        </ScrollArea>
-
-        <Divider my={"sm"}></Divider>
-
-        <Group align={"end"} justify={"center"}>
-          <Button
-            size={"compact-sm"}
-            leftSection={<IconRepeat size={16} />}
-            onClick={() => {
-              (chatboxRef.current as unknown)?.reset();
-            }}
-          >
-            Restart
-          </Button>
-        </Group>
-      </Collapse>
-    </Card>
+      <Drawer
+        opened={opened}
+        onClose={close}
+        withOverlay={false}
+        position={"right"}
+        title={
+          <Group align={"center"} gap={"sm"}>
+            <Title order={4}>Chat</Title>
+            <Button
+              size={"compact-xs"}
+              leftSection={<IconRepeat size={16} />}
+              onClick={() => {
+                (chatboxRef.current as unknown)?.reset();
+              }}
+            >
+              Restart
+            </Button>
+          </Group>
+        }
+      >
+        <Card w={400}>
+          <ScrollArea h={500} viewportRef={viewport}>
+            <webble-chatbox
+              ref={chatboxRef}
+              formId={params.formId}
+              style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
+            />
+          </ScrollArea>
+        </Card>
+      </Drawer>
+    </Flex>
   );
 }
 
@@ -611,7 +641,7 @@ function TopCenterPanel() {
             <HoverCard.Target>
               <Button
                 size={"xs"}
-                rightSection={
+                leftSection={
                   <IconShare2 style={{ width: rem(16), height: rem(16) }} />
                 }
               >
@@ -727,14 +757,14 @@ function TopLeftPanel() {
         </Flex>
       </Card>
 
-      {saveFetcher.state !== "idle" && (
+      <Box opacity={saveFetcher.state !== "idle" ? 1 : 0}>
         <Flex mt={"sm"} align={"center"} gap={"xs"}>
           <Loader type={"dots"} size={"xs"} color={"gray"}></Loader>
           <Text fz={"xs"} c="gray">
             Saving...
           </Text>
         </Flex>
-      )}
+      </Box>
     </>
   );
 }
@@ -745,21 +775,16 @@ function Submissions() {
 
   const keys = Array.from(
     new Set(
-      loaderData.submissions
-        .flatMap((session) => session.submissions)
-        .flatMap((i) => i[0]),
+      loaderData.sessions.flatMap((session) => Object.keys(session.values)),
     ),
   );
 
-  const rows = loaderData.submissions.map((session) => (
-    <Table.Tr key={nanoid()}>
-      {keys.map((key) => (
+  const rows = loaderData.sessions.map((session) => (
+    <Table.Tr key={session.id}>
+      <Table.Td key={`${session.id}-${session.id}`}>{session.id}</Table.Td>
+      {keys.sort().map((key) => (
         <Table.Td key={`${session.id}-${key}`}>
-          {(
-            session.submissions.find(
-              (submission) => submission?.[0] === key,
-            )?.[1] as { value: string }
-          )?.value || ""}
+          {session.values?.[key]?.value || "No data"}
         </Table.Td>
       ))}
     </Table.Tr>
@@ -784,7 +809,8 @@ function Submissions() {
           <Table verticalSpacing="xs">
             <Table.Thead>
               <Table.Tr>
-                {keys.map((item) => (
+                <Table.Th>ID</Table.Th>
+                {keys.sort().map((item) => (
                   <Table.Th key={item}>{item}</Table.Th>
                 ))}
               </Table.Tr>
@@ -845,7 +871,7 @@ function Menu() {
             position,
             data: {
               name: "Something random",
-              elements: [{ ...source.data, groupId }],
+              elements: [{ ...source.data, groupId, index: 0 }],
             },
           });
         }
@@ -879,7 +905,27 @@ function Menu() {
 
   return (
     <Card>
-      <SimpleGrid cols={2}>
+      <Group justify={"space-between"} align={"center"}>
+        <Title order={5}>Elements</Title>
+
+        <Tooltip
+          label={
+            <>
+              <Text fz={"xs"}>
+                Elements are the building blocks of your conversational form.
+              </Text>
+              <Text fz={"xs"}>Drag one unto the canvas to get started.</Text>
+            </>
+          }
+        >
+          <ThemeIcon size={"xs"}>
+            <IconInfoCircle />
+          </ThemeIcon>
+        </Tooltip>
+      </Group>
+      <Divider my={4} />
+
+      <SimpleGrid cols={1}>
         {Object.entries(elementsConfig).map(([key, value]) => (
           <Block
             name={value.name}

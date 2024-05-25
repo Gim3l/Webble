@@ -1,6 +1,7 @@
 <script lang="ts">
     import Button from "./Button.svelte";
     import {formId, handleReceivedMessage, sendMessage, sessionId} from "../stores";
+    export let id: string;
     export let placeholder: string = "Type something...";
     export let buttonLabel: string = "Send";
     export let type: "number" | "text" | "email" = "text"
@@ -12,7 +13,7 @@
     function sendMessageOnEnter(e: KeyboardEvent) {
         if(e.key === "Enter") {
             sendMessage({formId: $formId, message, sessionId: $sessionId}, (data) => {
-                handleReceivedMessage(data);
+                handleReceivedMessage(data, id);
                 message = '';
             })
         }

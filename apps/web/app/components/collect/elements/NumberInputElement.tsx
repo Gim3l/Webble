@@ -16,7 +16,7 @@ function NumberInputElement(
   element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
 ) {
   const ref = useRef<HTMLDivElement>(null);
-  console.log("THIS CHANGED");
+  console.log("THIS CHANGED " + element.id);
 
   useEffect(() => {
     invariant(ref.current);

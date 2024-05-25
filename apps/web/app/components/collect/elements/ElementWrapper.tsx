@@ -16,38 +16,21 @@ import {
   Tooltip,
   Select,
   rem,
+  Badge,
 } from "@mantine/core";
 import { motion } from "framer-motion";
-import {
-  deleteNode,
-  graphStore,
-  moveNode,
-  swapNodePositions,
-  updateNode,
-} from "../store";
-import React, { ReactNode, memo, useCallback, useMemo } from "react";
-import classes from "./ElementWrapper.module.css";
-import {
-  Icon,
-  IconArrowsMoveHorizontal,
-  IconAutomaticGearbox,
-  IconEdit,
-  IconForms,
-  IconManualGearbox,
-  IconSettings2,
-  IconSettingsCog,
-  IconTrash,
-} from "@tabler/icons-react";
-import { Handle, NodeProps, NodeToolbar, Position } from "@xyflow/react";
+import { graphStore, updateGroupElement } from "../store";
+import React, { ReactNode, useMemo } from "react";
+import { Icon, IconVariable } from "@tabler/icons-react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useSnapshot } from "valtio/react";
 import {
   BaseInputElementData,
-  ElementNode,
   elementsConfig,
   GroupElement,
+  isFromInputsGroup,
 } from "@webble/elements";
-import { useDisclosure, useHover } from "@mantine/hooks";
+import { useDisclosure } from "@mantine/hooks";
 import { useLoaderData } from "@remix-run/react";
 import { loader } from "~/routes/build.$formId";
 
@@ -119,7 +102,7 @@ function ElementWrapper({
       >
         {configEl}
 
-        <SaveToVariable node={element} />
+        {isFromInputsGroup(element) && <SaveToVariable element={element} />}
       </Drawer>
 
       <motion.div
@@ -143,18 +126,17 @@ function ElementWrapper({
             </ThemeIcon>
             <Text>{elementsConfig[element.type!]?.name}</Text>
           </Flex>
-          {/*{configEl && (*/}
-          {/*  <Tooltip label={"Settings"}>*/}
-          {/*    <ActionIcon*/}
-          {/*      size={"xs"}*/}
-          {/*      variant={"light"}*/}
-          {/*      style={{ hover: "cursor: pointer" }}*/}
-          {/*      onClick={() => open()}*/}
-          {/*    >*/}
-          {/*      <IconSettingsCog />*/}
-          {/*    </ActionIcon>*/}
-          {/*  </Tooltip>*/}
-          {/*)}*/}
+
+          {isFromInputsGroup(element) && element.data.variable && (
+            <Badge
+              size={"xs"}
+              leftSection={
+                <IconVariable style={{ width: rem(12), height: rem(12) }} />
+              }
+            >
+              {element.data.variable}
+            </Badge>
+          )}
         </Flex>
         {children && (
           <Box mt={"xs"} px={"sm"}>
@@ -166,17 +148,17 @@ function ElementWrapper({
   );
 }
 
-function SaveToVariable({ node }: { node: NodeProps<ElementNode> }) {
+function SaveToVariable({ element }: { element: GroupElement<"text_input"> }) {
   const { form } = useLoaderData<typeof loader>();
   return (
     <Select
       data={form?.variables.map((i) => i.label)}
-      defaultValue={(node.data as BaseInputElementData)?.variable}
+      defaultValue={(element.data as BaseInputElementData)?.variable}
       mt={"xl"}
       onChange={(v) => {
-        updateNode<(typeof node)["data"]>(node.id, {
-          ...node.data,
-          variable: v || "",
+        updateGroupElement({
+          ...element,
+          data: { ...element.data, variable: v || "" },
         });
       }}
       label={"Assign to Variable"}

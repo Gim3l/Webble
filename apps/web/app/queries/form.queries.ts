@@ -15,25 +15,51 @@ export const listForms = e.select(e.Form, (form) => ({
   filter: e.op(form.user.id, "=", e.global.current_user.id),
   id: true,
   structure: true,
+  published: true,
+  updated_at: true,
+  color: true,
   name: true,
+  order_by: {
+    expression: form.created_at,
+    direction: "ASC",
+  },
 }));
 
-export const createForm = e.params({ name: e.str }, (p) =>
-  e.insert(e.Form, {
-    name: p.name,
-    user: e.global.current_user,
-    structure: {
-      edges: [],
-      nodes: [
-        {
-          id: "start",
-          type: "start",
-          data: {},
-          position: { x: 500, y: 500 },
-        },
-      ],
-    },
-  }),
+export const createForm = e.params(
+  { name: e.str, color: e.optional(e.str) },
+  (p) =>
+    e.insert(e.Form, {
+      name: p.name,
+      user: e.global.current_user,
+      color: p.color,
+      structure: {
+        edges: [],
+        nodes: [
+          {
+            id: "start",
+            type: "start",
+            data: {},
+            position: { x: 500, y: 500 },
+          },
+        ],
+      },
+    }),
+);
+
+export const updateForm = e.params(
+  { id: e.uuid, name: e.str, color: e.str },
+  (p) =>
+    e.update(e.Form, (form) => ({
+      filter_single: e.op(
+        e.op(e.global.current_user, "=", form.user),
+        "and",
+        e.op(form.id, "=", p.id),
+      ),
+      set: {
+        name: p.name,
+        color: p.color,
+      },
+    })),
 );
 
 export const updateFormStructure = e.params(
@@ -99,23 +125,21 @@ export const toggleFormVisibility = e.params({ formId: e.uuid }, (p) =>
 
 export const getFormSubmissions = e.params({ formId: e.uuid }, (p) =>
   e.select(e.ChatSession, (session) => {
-    const submissions = e.select(
-      e.json_object_unpack(e.json_get(session.snapshot, "context", "values")),
-    );
+    // const submissions = e.select(
+    //   e.json_object_unpack(e.json_get(session.snapshot, "context", "values")),
+    // );
 
     return {
       id: true,
-      submissions,
+      // submissions,
       form: true,
-      filter: e.op(
-        e.op("exists", submissions),
-        "and",
+      filter:
+        // e.op("exists", submissions),
         e.op(
           e.op(session.form.id, "=", p.formId),
           "and",
           e.op(session.form.user.id, "=", e.global.current_user.id),
         ),
-      ),
       //   "and",
       //
     };

@@ -9,6 +9,7 @@ import {
 } from "~/queries/chat.queries";
 import { dbClient } from "~/lib/db";
 import { getForm } from "~/queries/form.queries";
+import { formMachine } from "~/lib/form.machine";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return cors(request, json({}), {
@@ -19,6 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ params, request }: ActionFunctionArgs) {
+  console.log("STARTING");
   const formData = await request.formData();
 
   const sessionId = ((await formData.get("sessionId")) as string) || "";
@@ -33,29 +35,25 @@ export async function action({ params, request }: ActionFunctionArgs) {
 
   console.log({ start: formData.get("start") });
 
-  const actor = createActor(chatMachine, {
+  const actor = createActor(formMachine, {
     snapshot: chatSession?.snapshot as Snapshot<unknown>,
     input: {
       edges: form.structure["edges"],
-      elements: form.structure["nodes"],
-      values: {},
+      groups: form.structure["nodes"],
     },
   });
 
   actor.start();
-  actor.send({ type: "continueChat", message });
+  console.log("STARTING");
+  actor.send({ type: "set.lastMessage", message });
 
   const snapshot = await waitFor(
     actor,
     (snapshot) => {
-      return !!snapshot.context.nextElementId;
+      return snapshot.value === "exit";
     },
     { timeout: 10_000 },
   );
-
-  // we need to reset messages so the initial event doesn't start at the
-  // last message node
-  actor.send({ type: "resetMessages" });
 
   const persistedSnapshot = actor.getPersistedSnapshot();
 
@@ -89,9 +87,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
       request,
       json({
         sessionId: session.id,
-        nextElementId: snapshot.context.nextElementId,
-        input: snapshot.context.input,
-        messages: snapshot.context.messages,
+        captures: snapshot.context.captures,
       }),
       {
         origin: "*",
@@ -109,9 +105,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
     request,
     json({
       sessionId: chatSession.id,
-      nextElementId: snapshot.context.nextElementId,
-      input: snapshot.context.input,
-      messages: snapshot.context.messages,
+      captures: snapshot.context.captures,
     }),
     { origin: "*", maxAge: 0 },
   );

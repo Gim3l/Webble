@@ -11,7 +11,7 @@
     nextElementId, messages, currentInput
   } from "./stores";
   import {createEventDispatcher, onMount} from "svelte";
-  export let formId = import.meta.env.PROD ? "" : "97473156-16ec-11ef-ae50-b748636cd3ea";
+  export let formId = import.meta.env.PROD ? "" : "a29cfbd0-1a57-11ef-83df-7be7e0c2cb79";
   export let inputValue = "";
 
   // $: {
@@ -47,7 +47,7 @@
     messages.set([])
     currentInput.set(null)
 
-    fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/chat/${formId}`, {method: "POST", body: formData,
+    fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/engage/${formId}`, {method: "POST", body: formData,
       headers: {
         "Origin": window.location.origin
       }}).then(async (res) => {
@@ -63,28 +63,9 @@
     }
   })
 
-
-
-
-
 </script>
 
-
-{#if import.meta.env.DEV}
-  <div>
-    Session: {$sessionId}
-  </div>
-  <input bind:value={inputValue} placeholder="Enter form id" />
-  <button on:click={() => formId = inputValue}>Start</button>
-
-
-{/if}
-
-
 <ChatContainer/>
-
-
-
 
 <style>
   :root {

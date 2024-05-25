@@ -1,8 +1,15 @@
 .root {
   cursor: pointer;
+  padding: 8px;
+  padding-inline: 16px;
+  transition: 0.05s linear;
+  box-shadow: none;
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  align-content: space-between;
 }
-
-/*.root :hover {*/
-/*  !*background: red;*!*/
-/*  !*transition: 0.1s ease-in-out;*!*/
-/*}*/
+.root:hover {
+  box-shadow: var(--mantine-shadow-lg);
+  border-color: transparent;
+}

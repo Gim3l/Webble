@@ -1,25 +1,42 @@
-import { Text } from "@mantine/core";
+import { Stack, Text, TextInput } from "@mantine/core";
 import { Node, NodeProps } from "@xyflow/react";
-
 import ElementWrapper from "./ElementWrapper";
-import { updateNode } from "~/components/collect/store";
+
 import {
   elementsConfig,
-  TextBubbleElementData,
+  GroupElement,
   TYPE_TEXT_BUBBLE_ELEMENT,
 } from "@webble/elements";
+import { updateGroupElement } from "~/components/collect/store";
 
 function TextBubbleElement(
-  node: NodeProps<Node<TextBubbleElementData, typeof TYPE_TEXT_BUBBLE_ELEMENT>>,
+  element: GroupElement<typeof TYPE_TEXT_BUBBLE_ELEMENT>,
 ) {
   return (
     <ElementWrapper
-      icon={elementsConfig[node.type].icon}
+      icon={elementsConfig[element.type].icon}
       groupId=""
-      element={node}
+      element={element}
+      configEl={
+        <>
+          <Stack gap="sm">
+            <TextInput
+              label="Placeholder"
+              placeholder="Enter "
+              variant="filled"
+              defaultValue={element.data.text}
+              onChange={(e) => {
+                updateGroupElement<typeof TYPE_TEXT_BUBBLE_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, text: e.target.value },
+                });
+              }}
+            />
+          </Stack>
+        </>
+      }
     >
-      {JSON.stringify(node.data)}
-      {node.data.text && <Text c={"gray"}>{node.data.text}</Text>}
+      <Text c={"gray"}>{element.data.text || "Enter text response"}</Text>
     </ElementWrapper>
   );
 }

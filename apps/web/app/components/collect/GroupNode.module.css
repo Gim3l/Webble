@@ -1,0 +1,20 @@
+.inputWrapper :hover {
+  background: var(--mantine-color-dark-light-hover);
+  transition: 0.2s linear;
+  margin: 0;
+}
+
+.inputWrapper :focus-within {
+  background: var(--mantine-color-dark-light);
+  transition: 0.2s linear;
+  margin: 0;
+}
+
+.input {
+  padding-inline: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  padding-block: 0;
+  border: 0;
+  margin: 0;
+}

@@ -184,13 +184,13 @@ export default function DefaultEdge({
           }}
           className="nodrag nopan"
         >
-          <ActionIcon
-            size={"xs"}
-            variant={data?.conditions?.length ? "filled" : "default"}
-            onClick={open}
-          >
-            <IconVariable />
-          </ActionIcon>
+          {/*<ActionIcon*/}
+          {/*  size={"xs"}*/}
+          {/*  variant={data?.conditions?.length ? "filled" : "default"}*/}
+          {/*  onClick={open}*/}
+          {/*>*/}
+          {/*  <IconVariable />*/}
+          {/*</ActionIcon>*/}
         </div>
       </EdgeLabelRenderer>
     </>

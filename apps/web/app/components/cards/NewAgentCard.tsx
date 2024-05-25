@@ -6,6 +6,7 @@ import {
   DEFAULT_THEME,
   Flex,
   Modal,
+  rem,
   Stack,
   TextInput,
   ThemeIcon,
@@ -20,6 +21,13 @@ import { useForm, zodResolver } from "@mantine/form";
 import { useFetcher } from "@remix-run/react";
 import { z } from "zod";
 
+const swatches = [
+  ...DEFAULT_THEME.colors.grape,
+  ...DEFAULT_THEME.colors.red,
+  ...DEFAULT_THEME.colors.green,
+  ...DEFAULT_THEME.colors.blue,
+];
+
 function NewAgentCard() {
   const [opened, { open, close }] = useDisclosure(false);
   const theme = useMantineTheme();
@@ -27,7 +35,10 @@ function NewAgentCard() {
   const fetcher = useFetcher();
 
   const form = useForm({
-    initialValues: { name: "", color: "" },
+    initialValues: {
+      name: "",
+      color: swatches[Math.floor(Math.random() * swatches.length)],
+    },
     validate: zodResolver(
       z.object({
         name: z
@@ -40,7 +51,7 @@ function NewAgentCard() {
 
   return (
     <>
-      <Modal opened={opened} onClose={close} title="Create Agent" centered>
+      <Modal opened={opened} onClose={close} title="Create Form" centered>
         <form
           onSubmit={form.onSubmit(({ name, color }) =>
             fetcher.submit(
@@ -58,26 +69,24 @@ function NewAgentCard() {
           ></TextInput>
 
           <ColorInput
+            closeOnColorSwatchClick
             mb={"sm"}
             label="Choose a color"
             disallowInput
             format="hex"
             withPicker={false}
-            defaultValue={theme.colors[theme.primaryColor][5]}
             key={form.key("color")}
             {...form.getInputProps("color")}
-            swatches={[
-              ...DEFAULT_THEME.colors.grape,
-              ...DEFAULT_THEME.colors.red,
-              ...DEFAULT_THEME.colors.green,
-              ...DEFAULT_THEME.colors.blue,
-            ]}
+            swatches={swatches}
           />
+
           <Flex justify={"end"}>
             <Button
               loading={fetcher.state !== "idle"}
               type={"submit"}
-              leftSection={<IconPlus />}
+              leftSection={
+                <IconPlus style={{ width: rem(16), height: rem(16) }} />
+              }
             >
               Create
             </Button>
@@ -115,7 +124,7 @@ function NewAgentCard() {
               </Avatar>
             </Flex>
             <Flex justify={"center"}>
-              <Title order={3}>New Agent</Title>
+              <Title order={3}>New Form</Title>
             </Flex>
           </Stack>
         </Card>
