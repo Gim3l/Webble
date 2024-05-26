@@ -17,10 +17,15 @@ import {
   IconBrandGoogle,
   IconInfoCircle,
 } from "@tabler/icons-react";
-import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
 import { auth } from "~/services/auth.server";
 import { Link, useFetcher, useSearchParams } from "@remix-run/react";
 import { NoIdentityFoundError } from "@edgedb/auth-remix/server";
+import { loader } from "~/routes/build.$formId";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: "Login | Webble" }];
+};
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();

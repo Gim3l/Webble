@@ -19,10 +19,20 @@ import {
   IconBrandGoogle,
   IconInfoCircle,
 } from "@tabler/icons-react";
-import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  json,
+  MetaFunction,
+  redirect,
+} from "@remix-run/node";
 import { auth } from "~/services/auth.server";
 import { Link, useFetcher } from "@remix-run/react";
 import { UserAlreadyRegisteredError } from "@edgedb/auth-remix/server";
+import { loader } from "~/routes/build.$formId";
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [{ title: "Sign Up | Webble" }];
+};
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
