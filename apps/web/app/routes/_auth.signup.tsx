@@ -91,27 +91,32 @@ export default function LoginPage(props: PaperProps) {
       </Text>
 
       {oauth && (
-        <Group grow mb="md" mt="md">
-          <Button
-            component={Link}
-            to={"/oauth/google"}
-            leftSection={<IconBrandGoogle />}
-            variant="default"
-          >
-            Google
-          </Button>
-          <Button
-            component={Link}
-            to={"/oauth/github"}
-            leftSection={<IconBrandGithub />}
-            variant="default"
-          >
-            GitHub
-          </Button>
-        </Group>
+        <>
+          <Group grow mb="md" mt="md">
+            <Button
+              component={Link}
+              to={"/oauth/google"}
+              leftSection={<IconBrandGoogle />}
+              variant="default"
+            >
+              Google
+            </Button>
+            <Button
+              component={Link}
+              to={"/oauth/github"}
+              leftSection={<IconBrandGithub />}
+              variant="default"
+            >
+              GitHub
+            </Button>
+          </Group>
+          <Divider
+            label="Or continue with email"
+            labelPosition="center"
+            my="lg"
+          />
+        </>
       )}
-
-      <Divider label="Or continue with email" labelPosition="center" my="lg" />
 
       <form
         onSubmit={form.onSubmit(({ password, email }) => {
