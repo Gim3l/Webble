@@ -17,15 +17,30 @@ import {
   IconBrandGoogle,
   IconInfoCircle,
 } from "@tabler/icons-react";
-import { ActionFunctionArgs, MetaFunction, redirect } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  json,
+  MetaFunction,
+  redirect,
+} from "@remix-run/node";
 import { auth } from "~/services/auth.server";
-import { Link, useFetcher, useSearchParams } from "@remix-run/react";
+import {
+  Link,
+  useFetcher,
+  useLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 import { NoIdentityFoundError } from "@edgedb/auth-remix/server";
-import { loader } from "~/routes/build.$formId";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: "Login | Webble" }];
 };
+
+export function loader() {
+  return json({
+    oauth: process.env.OAUTH_ENABLED === "true",
+  });
+}
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -67,31 +82,34 @@ export default function LoginPage(props: PaperProps) {
   });
 
   const fetcher = useFetcher();
+  const { oauth } = useLoaderData<typeof loader>();
 
   return (
     <Paper radius="md" p="xl" withBorder {...props} w={"100%"} px={"xl"}>
       <Text size="lg" fw={500}>
-        Welcome to Webble, login with
+        Welcome back to Webble
       </Text>
 
-      <Group grow mb="md" mt="md">
-        <Button
-          leftSection={<IconBrandGoogle />}
-          component={Link}
-          to={"/oauth/google"}
-          variant="default"
-        >
-          Google
-        </Button>
-        <Button
-          component={Link}
-          to={"/oauth/github"}
-          leftSection={<IconBrandGithub />}
-          variant="default"
-        >
-          GitHub
-        </Button>
-      </Group>
+      {oauth && (
+        <Group grow mb="md" mt="md">
+          <Button
+            leftSection={<IconBrandGoogle />}
+            component={Link}
+            to={"/oauth/google"}
+            variant="default"
+          >
+            Google
+          </Button>
+          <Button
+            component={Link}
+            to={"/oauth/github"}
+            leftSection={<IconBrandGithub />}
+            variant="default"
+          >
+            GitHub
+          </Button>
+        </Group>
+      )}
 
       <Divider label="Or continue with email" labelPosition="center" my="lg" />
 
