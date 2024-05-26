@@ -420,21 +420,26 @@ export function Chat() {
     });
 
   useEffect(() => {
-    if (chatboxRef.current)
-      chatboxRef.current.addEventListener("targetChange", (e: unknown) => {
-        const nodes = reactFlow.getNodes().map((node) => {
-          if (node.id === e.detail) return { ...node, selected: true };
-          return { ...node, selected: false };
-        });
-        scrollToBottom();
-        reactFlow.setNodes(nodes);
-
-        reactFlow.fitView({
-          nodes: [{ id: e.detail }],
-          duration: 500,
-          maxZoom: 1,
-        });
+    if (!chatboxRef.current) return;
+    const handler = (e: unknown) => {
+      const nodes = reactFlow.getNodes().map((node) => {
+        if (node.id === e.detail.groupId) return { ...node, selected: true };
+        return { ...node, selected: false };
       });
+      scrollToBottom();
+      reactFlow.setNodes(nodes);
+
+      reactFlow.fitView({
+        nodes: [{ id: e.detail.groupId }],
+        duration: 500,
+        maxZoom: 1,
+      });
+    };
+
+    chatboxRef.current.addEventListener("targetChange", handler);
+
+    return () =>
+      chatboxRef.current?.removeEventListener("targetChange", handler);
   }, [chatboxRef.current]);
 
   const [opened, { toggle, open, close }] = useDisclosure();
@@ -480,7 +485,7 @@ export function Chat() {
               key={params.formId}
               ref={chatboxRef}
               formId={params.formId}
-              style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
+              // style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
             />
           </ScrollArea>
         </Card>

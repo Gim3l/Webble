@@ -8,7 +8,7 @@
     sessionId,
     formId as chatFormId,
     handleReceivedMessage,
-    nextElementId, messages, currentInput
+     messages, currentInput
   } from "./stores";
   import {createEventDispatcher, onMount} from "svelte";
   export let formId = import.meta.env.PROD ? "" : "552b72ee-1aa9-11ef-9be2-c784356adc1e";
@@ -33,8 +33,10 @@
 
 
 
-  nextElementId.subscribe((id) => {
-    if(id) dispatch("targetChange", id);
+  messages.subscribe((msgs) => {
+    if(msgs[msgs.length - 1]?.id) {
+        dispatch("targetChange", {groupId: msgs[msgs.length - 1].groupId, elementId: msgs[msgs.length - 1].id})
+    }
   })
 
   // reset the chat
