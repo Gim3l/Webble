@@ -35,7 +35,7 @@
     <Button
             on:click={() => {
 
-                sendMessage({formId: $formId, message, sessionId: $sessionId}, (data) => {
+                sendMessage({formId: $formId, message, sessionId: $sessionId, inputId: id}, (data) => {
                     handleReceivedMessage(data)
                     message = ''
                 })
