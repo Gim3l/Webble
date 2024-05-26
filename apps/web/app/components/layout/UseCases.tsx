@@ -63,16 +63,14 @@ export function UseCasesSection() {
       <Text className={classes.supTitle}>Use cases</Text>
 
       <Title className={classes.title} order={2}>
-        PharmLand is <span className={classes.highlight}>not</span> just for
-        pharmacists
+        Conversational forms{" "}
+        <span className={classes.highlight}>can be wherever</span> you want
       </Title>
 
       <Container size={660} p={0}>
         <Text c="dimmed" className={classes.description}>
-          Its lungs contain an organ that creates electricity. The crackling
-          sound of electricity can be heard when it exhales. Azurill’s tail is
-          large and bouncy. It is packed full of the nutrients this Pokémon
-          needs to grow.
+          Forms are everywhere, but they are static. They are not engaging.
+          Conversational forms can be anywhere your users are.
         </Text>
       </Container>
 

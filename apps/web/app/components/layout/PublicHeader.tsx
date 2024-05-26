@@ -1,8 +1,20 @@
 import { useState } from "react";
-import { Container, Group, Burger, Title } from "@mantine/core";
+import {
+  Container,
+  Group,
+  Burger,
+  Title,
+  ThemeIcon,
+  Button,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 // import { MantineLogo } from "@mantinex/mantine-logo";
-import classes from "./PublicHeader.module.cs";
+import classes from "./PublicHeader.module.css";
+import {
+  IconMessageChatbot,
+  IconMessageChatbotFilled,
+} from "@tabler/icons-react";
+import { Link } from "@remix-run/react";
 
 const links = [
   { link: "/about", label: "Features" },
@@ -11,7 +23,7 @@ const links = [
   { link: "/community", label: "Community" },
 ];
 
-export function HeaderSimple() {
+export function PublicHeader() {
   const [opened, { toggle }] = useDisclosure(false);
   const [active, setActive] = useState(links[0].link);
 
@@ -33,9 +45,17 @@ export function HeaderSimple() {
   return (
     <header className={classes.header}>
       <Container size="md" className={classes.inner}>
-        <Title>Webble</Title>
+        <Group align={"center"} gap={8}>
+          <ThemeIcon>
+            <IconMessageChatbotFilled size={"xs"} />
+          </ThemeIcon>
+          <Title order={3}>Webble</Title>
+        </Group>
+
         <Group gap={5} visibleFrom="xs">
-          {items}
+          <Button component={Link} to={"/signup"}>
+            Get Started
+          </Button>
         </Group>
 
         <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />

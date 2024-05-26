@@ -1,6 +1,7 @@
-import { Title, Text, Button, Container } from "@mantine/core";
+import { Title, Text, Button, Container, Box, Group } from "@mantine/core";
 import { Dots } from "./Dots";
 import classes from "./Hero.module.css";
+import { Link } from "@remix-run/react";
 
 export function HeroSection() {
   return (
@@ -28,7 +29,7 @@ export function HeroSection() {
           </Text>
         </Container>
 
-        <div className={classes.controls}>
+        <Group className={classes.controls}>
           <Button
             className={classes.control}
             size="lg"
@@ -37,10 +38,18 @@ export function HeroSection() {
           >
             Show Me
           </Button>
-          <Button className={classes.control} size="lg">
-            Give it a try
-          </Button>
-        </div>
+
+          <Box>
+            <Button
+              className={classes.control}
+              size="lg"
+              component={Link}
+              to={"/signup"}
+            >
+              Give it a try
+            </Button>
+          </Box>
+        </Group>
       </div>
     </Container>
   );
