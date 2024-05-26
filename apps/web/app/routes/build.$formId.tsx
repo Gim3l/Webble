@@ -126,7 +126,7 @@ import {
 } from "@webble/elements";
 import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
 import { Block } from "~/components/collect/Block";
-import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+// import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 import { HeadersFunction } from "@vercel/remix";
 import { getFormChatSessions } from "~/queries/chat.queries";
@@ -833,76 +833,67 @@ function Menu() {
 
     invariant(pane);
     invariant(reactFlow);
+    const controller = new AbortController();
 
-    return dropTargetForElements({
-      element: pane,
-      onDrop({ source, location }) {
-        if (location.current.dropTargets.length > 1) return;
+    (async () => {
+      const { dropTargetForElements } = await import(
+        "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+      );
+      if (controller.signal.aborted) {
+        return;
+      }
 
-        const position = reactFlow.screenToFlowPosition({
-          // bring element directly under the mouse by shifting it slightly
-          x: location.current.input.pageX - 50,
-          y: location.current.input.pageY - 50,
-        });
+      const cleanup = dropTargetForElements({
+        element: pane,
+        onDrop({ source, location }) {
+          if (location.current.dropTargets.length > 1) return;
 
-        // check if source has a group id, if so remove it from the group
-        if (source.data.groupId && isGroupElement(source.data)) {
-          removeElementFromGroup(source.data.groupId, source.data.id);
-          removeEmptyGroups();
-          // groupId
-          const groupId = nanoid();
-          const element = { ...source.data, index: 0 };
-          addNode<Node<GroupNodeData>>({
-            id: groupId,
-            type: "collection",
-            position,
-            data: {
-              elements: [{ ...element, groupId }],
-            },
+          const position = reactFlow.screenToFlowPosition({
+            // bring element directly under the mouse by shifting it slightly
+            x: location.current.input.pageX - 50,
+            y: location.current.input.pageY - 50,
           });
-          remapElementEdges(groupId, element);
-        }
 
-        // add new groups from source
-        if (isGroupElement(source.data) && !source.data.groupId) {
-          const groupId = nanoid();
+          // check if source has a group id, if so remove it from the group
+          if (source.data.groupId && isGroupElement(source.data)) {
+            removeElementFromGroup(source.data.groupId, source.data.id);
+            removeEmptyGroups();
+            // groupId
+            const groupId = nanoid();
+            const element = { ...source.data, index: 0 };
+            addNode<Node<GroupNodeData>>({
+              id: groupId,
+              type: "collection",
+              position,
+              data: {
+                elements: [{ ...element, groupId }],
+              },
+            });
+            remapElementEdges(groupId, element);
+          }
 
-          removeElementFromGroup(source.data.groupId, source.data.id);
-          addNode<Node<GroupNodeData>>({
-            id: groupId,
-            type: "collection",
-            position,
-            data: {
-              elements: [{ ...source.data, groupId, index: 0 }],
-            },
-          });
-        }
+          // add new groups from source
+          if (isGroupElement(source.data) && !source.data.groupId) {
+            const groupId = nanoid();
 
-        // reactFlow.setNodes([
-        //   ...reactFlow.getNodes(),
-        //   {
-        //     id: nanoid(),
-        //     position,
-        //     data: {
-        //       name: "Hello world",
-        //       elements: [
-        //         {
-        //           id: nanoid(),
-        //           type: "text_bubble",
-        //           data: { text: "This is nice" },
-        //         },
-        //         {
-        //           id: nanoid(),
-        //           type: "text_bubble",
-        //           data: { text: "This is nice too" },
-        //         },
-        //       ],
-        //     } satisfies GroupNodeData,
-        //     type: "collection",
-        //   },
-        // ]);
-      },
-    });
+            removeElementFromGroup(source.data.groupId, source.data.id);
+            addNode<Node<GroupNodeData>>({
+              id: groupId,
+              type: "collection",
+              position,
+              data: {
+                elements: [{ ...source.data, groupId, index: 0 }],
+              },
+            });
+          }
+        },
+      });
+      controller.signal.addEventListener("abort", cleanup, { once: true });
+    })();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (

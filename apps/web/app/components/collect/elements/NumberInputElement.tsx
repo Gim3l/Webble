@@ -8,7 +8,7 @@ import {
   GroupElement,
 } from "@webble/elements";
 import { useEffect, useRef } from "react";
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+// import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 
 function NumberInputElement(
@@ -16,19 +16,19 @@ function NumberInputElement(
 ) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    invariant(ref.current);
-
-    return draggable({
-      element: ref.current,
-      canDrag() {
-        return false;
-      },
-    });
-  }, [ref]);
+  // useEffect(() => {
+  //   invariant(ref.current);
+  //
+  //   return draggable({
+  //     element: ref.current,
+  //     canDrag() {
+  //       return false;
+  //     },
+  //   });
+  // }, [ref]);
   return (
     <Box pos={"relative"}>
-      <div ref={ref}>
+      <div ref={ref} draggable={"false"}>
         <Handle
           type={"target"}
           style={{ left: 0 }}

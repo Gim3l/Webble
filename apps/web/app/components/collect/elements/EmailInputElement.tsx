@@ -10,27 +10,27 @@ import {
 } from "@webble/elements";
 import { useEffect, useRef } from "react";
 import invariant from "tiny-invariant";
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+// import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 function EmailInputElement(
   element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
 ) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    invariant(ref.current);
-
-    return draggable({
-      element: ref.current,
-      canDrag() {
-        return false;
-      },
-    });
-  }, [ref]);
+  // useEffect(() => {
+  //   invariant(ref.current);
+  //
+  //   return draggable({
+  //     element: ref.current,
+  //     canDrag() {
+  //       return false;
+  //     },
+  //   });
+  // }, [ref]);
 
   return (
     <Box pos={"relative"}>
-      <div ref={ref}>
+      <div ref={ref} draggable={"false"}>
         <Handle
           type={"target"}
           style={{ left: 0 }}

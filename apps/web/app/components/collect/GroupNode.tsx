@@ -3,29 +3,59 @@ import {
   Handle,
   Node,
   NodeProps,
-  NodeResizer,
   Position,
   useReactFlow,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  draggable,
-  dropTargetForElements,
-  monitorForElements,
-} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
-import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
-import {
-  attachClosestEdge,
-  extractClosestEdge,
-  Edge,
-} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
-import { triggerPostMoveFlash } from "@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash";
-import DropIndicator from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
-import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
-import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
+
+// import { triggerPostMoveFlash } from "@atlaskit/pragmatic-drag-and-drop-flourish/trigger-post-move-flash";
+const DropIndicator = lazy(
+  () => import("@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box"),
+);
+// import { reorder } from "@atlaskit/pragmatic-drag-and-drop/reorder";
+// import { getReorderDestinationIndex } from "@atlaskit/pragmatic-drag-and-drop-hitbox/util/get-reorder-destination-index";
+
+export function getReorderDestinationIndex({
+  startIndex,
+  closestEdgeOfTarget,
+  indexOfTarget,
+  axis,
+}: {
+  startIndex: number;
+  closestEdgeOfTarget: "top" | "bottom" | "right" | null;
+  indexOfTarget: number;
+  axis: "vertical" | "horizontal";
+}): number {
+  // invalid index's
+  if (startIndex === -1 || indexOfTarget === -1) {
+    return startIndex;
+  }
+
+  // if we are targeting the same index we don't need to do anything
+  if (startIndex === indexOfTarget) {
+    return startIndex;
+  }
+
+  if (closestEdgeOfTarget == null) {
+    return indexOfTarget;
+  }
+
+  const isGoingAfter: boolean =
+    (axis === "vertical" && closestEdgeOfTarget === "bottom") ||
+    (axis === "horizontal" && closestEdgeOfTarget === "right");
+
+  const isMovingForward: boolean = startIndex < indexOfTarget;
+  // moving forward
+  if (isMovingForward) {
+    return isGoingAfter ? indexOfTarget : indexOfTarget - 1;
+  }
+  // moving backwards
+  return isGoingAfter ? indexOfTarget + 1 : indexOfTarget;
+}
+
 import {
   GroupElement,
   GroupNodeData,
@@ -50,7 +80,26 @@ import {
 } from "~/components/collect/store";
 import classes from "./GroupNode.module.css";
 import { useFocusWithin } from "@mantine/hooks";
-import { indexOf } from "effect/String";
+
+export function reorder<Value>({
+  list,
+  startIndex,
+  finishIndex,
+}: {
+  list: Value[];
+  startIndex: number;
+  finishIndex: number;
+}): Value[] {
+  if (startIndex === -1 || finishIndex === -1) {
+    return list;
+  }
+
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(finishIndex, 0, removed);
+
+  return result;
+}
 
 export function CollectionNode(
   node: NodeProps<Node<GroupNodeData, "container">>,
@@ -72,7 +121,7 @@ export function CollectionNode(
     }: {
       startIndex: number;
       indexOfTarget: number;
-      closestEdgeOfTarget: Edge | null;
+      closestEdgeOfTarget: "top" | "bottom" | null;
     }) => {
       const finishIndex = getReorderDestinationIndex({
         startIndex,
@@ -102,80 +151,179 @@ export function CollectionNode(
   const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
-    return monitorForElements({
-      canMonitor({ source }) {
-        return source.data.groupId === node.id;
-      },
-      onDrop({ location, source }) {
-        console.log({ location, source });
-        const target = location.current.dropTargets[0];
-        if (!target) {
-          return;
-        }
+    const controller = new AbortController();
 
-        const sourceData = source.data;
-        const targetData = target.data;
-        if (!isGroupElement(sourceData) || !isGroupElement(targetData)) {
-          return;
-        }
+    (async () => {
+      const { monitorForElements } = await import(
+        "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+      );
+      const { extractClosestEdge } = await import(
+        "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+      );
+      if (controller.signal.aborted) {
+        return;
+      }
+      const el = ref.current;
+      if (!el) {
+        return;
+      }
 
-        const closestEdgeOfTarget = extractClosestEdge(targetData);
+      const cleanup = monitorForElements({
+        canMonitor({ source }) {
+          return source.data.groupId === node.id;
+        },
+        onDrop({ location, source }) {
+          console.log({ location, source });
+          const target = location.current.dropTargets[0];
+          if (!target) {
+            return;
+          }
 
-        let indexOfTarget = node.data.elements.findIndex(
-          (item) => item.id === targetData.id,
-        );
+          const sourceData = source.data;
+          const targetData = target.data;
+          if (!isGroupElement(sourceData) || !isGroupElement(targetData)) {
+            return;
+          }
 
-        // handle moving items between groups
-        if (sourceData.groupId !== targetData.groupId) {
-          const targetGroup = reactFlow
-            .getNodes()
-            .find((node) => node.id === targetData.groupId);
+          const closestEdgeOfTarget = extractClosestEdge(targetData);
 
-          if (!targetGroup) return;
-
-          indexOfTarget = targetGroup.data.elements.findIndex(
+          let indexOfTarget = node.data.elements.findIndex(
             (item) => item.id === targetData.id,
           );
 
-          // alert(targetData.index);
-          if (closestEdgeOfTarget === "top") {
-            addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
+          // handle moving items between groups
+          if (sourceData.groupId !== targetData.groupId) {
+            const targetGroup = reactFlow
+              .getNodes()
+              .find((node) => node.id === targetData.groupId);
 
-            removeElementFromGroup(sourceData.groupId, sourceData.id);
-            removeEmptyGroups();
-          }
+            if (!targetGroup) return;
 
-          if (closestEdgeOfTarget === "bottom") {
-            addElementToGroup(
-              targetData.groupId,
-              sourceData,
-              indexOfTarget + 1,
-              // targetData.index + 1,
+            indexOfTarget = targetGroup.data.elements.findIndex(
+              (item) => item.id === targetData.id,
             );
-            removeElementFromGroup(sourceData.groupId, sourceData.id);
-            removeEmptyGroups();
+
+            // alert(targetData.index);
+            if (closestEdgeOfTarget === "top") {
+              addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
+
+              removeElementFromGroup(sourceData.groupId, sourceData.id);
+              removeEmptyGroups();
+            }
+
+            if (closestEdgeOfTarget === "bottom") {
+              addElementToGroup(
+                targetData.groupId,
+                sourceData,
+                indexOfTarget + 1,
+                // targetData.index + 1,
+              );
+              removeElementFromGroup(sourceData.groupId, sourceData.id);
+              removeEmptyGroups();
+            }
+
+            return;
           }
 
-          return;
-        }
+          if (indexOfTarget < 0) {
+            return;
+          }
 
-        if (indexOfTarget < 0) {
-          return;
-        }
+          if (target.data) {
+            reorderItem({
+              startIndex: sourceData.index,
+              indexOfTarget,
+              closestEdgeOfTarget,
+            });
+          }
 
-        if (target.data) {
-          reorderItem({
-            startIndex: sourceData.index,
-            indexOfTarget,
-            closestEdgeOfTarget,
-          });
-        }
+          // triggerPostMoveFlash(source.element);
+          updateNodeInternals(node.id);
+        },
+      });
+      controller.signal.addEventListener("abort", cleanup, { once: true });
+    })();
 
-        triggerPostMoveFlash(source.element);
-        updateNodeInternals(node.id);
-      },
-    });
+    return () => {
+      controller.abort();
+    };
   }, [node.data.elements, reorderItem, node.id]);
+
+  // useEffect(() => {
+  //   return monitorForElements({
+  //     canMonitor({ source }) {
+  //       return source.data.groupId === node.id;
+  //     },
+  //     onDrop({ location, source }) {
+  //       console.log({ location, source });
+  //       const target = location.current.dropTargets[0];
+  //       if (!target) {
+  //         return;
+  //       }
+  //
+  //       const sourceData = source.data;
+  //       const targetData = target.data;
+  //       if (!isGroupElement(sourceData) || !isGroupElement(targetData)) {
+  //         return;
+  //       }
+  //
+  //       const closestEdgeOfTarget = extractClosestEdge(targetData);
+  //
+  //       let indexOfTarget = node.data.elements.findIndex(
+  //         (item) => item.id === targetData.id,
+  //       );
+  //
+  //       // handle moving items between groups
+  //       if (sourceData.groupId !== targetData.groupId) {
+  //         const targetGroup = reactFlow
+  //           .getNodes()
+  //           .find((node) => node.id === targetData.groupId);
+  //
+  //         if (!targetGroup) return;
+  //
+  //         indexOfTarget = targetGroup.data.elements.findIndex(
+  //           (item) => item.id === targetData.id,
+  //         );
+  //
+  //         // alert(targetData.index);
+  //         if (closestEdgeOfTarget === "top") {
+  //           addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
+  //
+  //           removeElementFromGroup(sourceData.groupId, sourceData.id);
+  //           removeEmptyGroups();
+  //         }
+  //
+  //         if (closestEdgeOfTarget === "bottom") {
+  //           addElementToGroup(
+  //             targetData.groupId,
+  //             sourceData,
+  //             indexOfTarget + 1,
+  //             // targetData.index + 1,
+  //           );
+  //           removeElementFromGroup(sourceData.groupId, sourceData.id);
+  //           removeEmptyGroups();
+  //         }
+  //
+  //         return;
+  //       }
+  //
+  //       if (indexOfTarget < 0) {
+  //         return;
+  //       }
+  //
+  //       if (target.data) {
+  //         reorderItem({
+  //           startIndex: sourceData.index,
+  //           indexOfTarget,
+  //           closestEdgeOfTarget,
+  //         });
+  //       }
+  //
+  //       triggerPostMoveFlash(source.element);
+  //       updateNodeInternals(node.id);
+  //     },
+  //   });
+  // }, [node.data.elements, reorderItem, node.id]);
 
   return (
     <>
@@ -224,77 +372,171 @@ export function GroupItem({
 
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [closestEdge, setClosestEdge] = useState<Edge | null>(null);
+  const [closestEdge, setClosestEdge] = useState<"top" | "bottom" | null>(null);
   const ElementComp = elementTypes[data.type];
   const { allowElementDrag } = useSnapshot(graphStore);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const element = ref.current;
     invariant(element);
 
-    return combine(
-      draggable({
-        element,
-        canDrag() {
-          return allowElementDrag;
-        },
-        getInitialData() {
-          return { ...data, groupId, index };
-        },
-        onDragStart() {
-          setIsDragging(true);
-        },
-        onDrop() {
-          setIsDragging(false);
-        },
-      }),
-      dropTargetForElements({
-        element: ref.current,
-        getData({ input }) {
-          return attachClosestEdge(
-            { index, ...data },
-            {
-              element,
-              input,
-              allowedEdges: ["top", "bottom"],
-            },
-          );
-        },
-        onDrag({ source, self }) {
-          const isSource = source.element === element;
-          if (isSource) {
+    (async () => {
+      const { attachClosestEdge, extractClosestEdge } = await import(
+        "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"
+      );
+      const { combine } = await import(
+        "@atlaskit/pragmatic-drag-and-drop/combine"
+      );
+      const { draggable, dropTargetForElements } = await import(
+        "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+      );
+      if (controller.signal.aborted) {
+        return;
+      }
+      const el = ref.current;
+      if (!el) {
+        return;
+      }
+
+      const cleanup = combine(
+        draggable({
+          element,
+          canDrag() {
+            return allowElementDrag;
+          },
+          getInitialData() {
+            return { ...data, groupId, index };
+          },
+          onDragStart() {
+            setIsDragging(true);
+          },
+          onDrop() {
+            setIsDragging(false);
+          },
+        }),
+        dropTargetForElements({
+          element: ref.current,
+          getData({ input }) {
+            return attachClosestEdge(
+              { index, ...data },
+              {
+                element,
+                input,
+                allowedEdges: ["top", "bottom"],
+              },
+            );
+          },
+          onDrag({ source, self }) {
+            const isSource = source.element === element;
+            if (isSource) {
+              setClosestEdge(null);
+              return;
+            }
+
+            const closestEdge = extractClosestEdge(self.data);
+
+            const sourceIndex = source.data.index;
+            invariant(typeof sourceIndex === "number");
+
+            const isItemBeforeSource = index === sourceIndex - 1;
+            const isItemAfterSource = index === sourceIndex + 1;
+
+            const isDropIndicatorHidden =
+              (isItemBeforeSource && closestEdge === "bottom") ||
+              (isItemAfterSource && closestEdge === "top");
+
+            if (isDropIndicatorHidden) {
+              setClosestEdge(null);
+              return;
+            }
+
+            setClosestEdge(closestEdge);
+          },
+          onDragLeave() {
             setClosestEdge(null);
-            return;
-          }
-
-          const closestEdge = extractClosestEdge(self.data);
-
-          const sourceIndex = source.data.index;
-          invariant(typeof sourceIndex === "number");
-
-          const isItemBeforeSource = index === sourceIndex - 1;
-          const isItemAfterSource = index === sourceIndex + 1;
-
-          const isDropIndicatorHidden =
-            (isItemBeforeSource && closestEdge === "bottom") ||
-            (isItemAfterSource && closestEdge === "top");
-
-          if (isDropIndicatorHidden) {
+          },
+          onDrop() {
             setClosestEdge(null);
-            return;
-          }
+          },
+        }),
+      );
+      controller.signal.addEventListener("abort", cleanup, { once: true });
+    })();
 
-          setClosestEdge(closestEdge);
-        },
-        onDragLeave() {
-          setClosestEdge(null);
-        },
-        onDrop() {
-          setClosestEdge(null);
-        },
-      }),
-    );
+    return () => {
+      controller.abort();
+    };
   }, [data, index]);
+
+  // useEffect(() => {
+  //   const element = ref.current;
+  //   invariant(element);
+  //
+  //   return combine(
+  //     draggable({
+  //       element,
+  //       canDrag() {
+  //         return allowElementDrag;
+  //       },
+  //       getInitialData() {
+  //         return { ...data, groupId, index };
+  //       },
+  //       onDragStart() {
+  //         setIsDragging(true);
+  //       },
+  //       onDrop() {
+  //         setIsDragging(false);
+  //       },
+  //     }),
+  //     dropTargetForElements({
+  //       element: ref.current,
+  //       getData({ input }) {
+  //         return attachClosestEdge(
+  //           { index, ...data },
+  //           {
+  //             element,
+  //             input,
+  //             allowedEdges: ["top", "bottom"],
+  //           },
+  //         );
+  //       },
+  //       onDrag({ source, self }) {
+  //         const isSource = source.element === element;
+  //         if (isSource) {
+  //           setClosestEdge(null);
+  //           return;
+  //         }
+  //
+  //         const closestEdge = extractClosestEdge(self.data);
+  //
+  //         const sourceIndex = source.data.index;
+  //         invariant(typeof sourceIndex === "number");
+  //
+  //         const isItemBeforeSource = index === sourceIndex - 1;
+  //         const isItemAfterSource = index === sourceIndex + 1;
+  //
+  //         const isDropIndicatorHidden =
+  //           (isItemBeforeSource && closestEdge === "bottom") ||
+  //           (isItemAfterSource && closestEdge === "top");
+  //
+  //         if (isDropIndicatorHidden) {
+  //           setClosestEdge(null);
+  //           return;
+  //         }
+  //
+  //         setClosestEdge(closestEdge);
+  //       },
+  //       onDragLeave() {
+  //         setClosestEdge(null);
+  //       },
+  //       onDrop() {
+  //         setClosestEdge(null);
+  //       },
+  //     }),
+  //   );
+  // }, [data, index]);
 
   return (
     <Box className={"nodrag"} pos={"relative"} ref={ref}>
@@ -324,14 +566,33 @@ export function ElementHandles({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     invariant(ref.current);
 
-    return draggable({
-      element: ref.current,
-      canDrag() {
-        return false;
-      },
-    });
+    (async () => {
+      const { draggable } = await import(
+        "@atlaskit/pragmatic-drag-and-drop/element/adapter"
+      );
+      if (controller.signal.aborted) {
+        return;
+      }
+      const el = ref.current;
+      if (!el) {
+        return;
+      }
+
+      const cleanup = draggable({
+        element: ref.current,
+        canDrag() {
+          return false;
+        },
+      });
+      controller.signal.addEventListener("abort", cleanup, { once: true });
+    })();
+
+    return () => {
+      controller.abort();
+    };
   }, [ref, sourceId, targetId]);
 
   return (

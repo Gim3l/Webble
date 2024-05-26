@@ -9,7 +9,6 @@ installGlobals();
 export default defineConfig({
   plugins: [
     remix({
-      serverModuleFormat: "cjs",
       presets: [vercelPreset()],
     }),
     tsconfigPaths(),
