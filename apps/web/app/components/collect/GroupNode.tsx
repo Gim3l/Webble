@@ -329,7 +329,16 @@ export function CollectionNode(
     <>
       <Handle type="target" position={Position.Left} id={node.id} />
       <Handle type="source" position={Position.Right} id={node.id} />
-      <Card withBorder w={260} ref={ref}>
+      <Card
+        withBorder
+        w={260}
+        ref={ref}
+        style={{
+          borderColor: node.selected
+            ? "var(--mantine-primary-color-5)"
+            : undefined,
+        }}
+      >
         <Input
           ref={titleInputRef}
           onClick={() => setIsEditing(true)}
