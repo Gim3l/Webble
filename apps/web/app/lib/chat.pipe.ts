@@ -2,10 +2,12 @@ import { Effect, pipe } from "effect";
 import { Edge, Node } from "@xyflow/react";
 import {
   EdgeData,
+  elementHasOptions,
   GroupElement,
   GroupNodeData,
   isFromInputsGroup,
 } from "@webble/elements";
+import { resolve } from "eslint-import-resolver-typescript";
 
 type ChatState = {
   lastMessage?: string;
@@ -48,7 +50,6 @@ function startup(state: ChatState): Effect.Effect<ChatState, Error> {
   //   if (!element) return Effect.fail(new Error("Starting element not found"));
   //   state.captures = [element];
   // }
-
   return Effect.succeed(state);
 }
 
@@ -96,6 +97,39 @@ function jumpIfNecessary(state: ChatState): Effect.Effect<ChatState, Error> {
       }
     }
 
+    // handle elements with multiple handles/edges
+    if (elementHasOptions(state.lastCapturedEl)) {
+      console.log("LINKED EDGES FOR ELEMENT", linkedEdges);
+      for (const option of state.lastCapturedEl.data.options) {
+        const optionEdges = state.edges.filter(
+          (edge) => edge.sourceHandle === option.id,
+        );
+
+        if (option.label === state.lastMessage && optionEdges.length === 1) {
+          const resolvedEdge = optionEdges[0];
+
+          const newGroup = state.groups.find(
+            (group) => group.id === resolvedEdge.target,
+          );
+          if (newGroup) state.lastCapturedEl = null;
+          state.group = newGroup || state.group;
+
+          // point to new element within the next group
+          if (
+            state.group &&
+            resolvedEdge.targetHandle &&
+            resolvedEdge.targetHandle !== resolvedEdge.target
+          ) {
+            const elementIndex = state.group.data.elements.findIndex(
+              (element) => element.id === resolvedEdge.targetHandle,
+            );
+            state.lastCapturedEl =
+              state.group.data.elements[elementIndex - 1] || null;
+          }
+        }
+      }
+    }
+
     // jump to next group after last element of current group
     if (
       state.group &&
@@ -106,7 +140,7 @@ function jumpIfNecessary(state: ChatState): Effect.Effect<ChatState, Error> {
         (edge) => edge.source === state.group?.id,
       );
       const newGroup = state.groups.find(
-        (group) => linkedEdges?.[0].target === group.id,
+        (group) => linkedEdges?.[0]?.target === group.id,
       );
 
       if (newGroup) {
@@ -115,7 +149,8 @@ function jumpIfNecessary(state: ChatState): Effect.Effect<ChatState, Error> {
         state.initialLastCapturedEl = null;
         state.lastCapturedEl = state.group.data.elements[0];
       } else {
-        return Effect.fail(new Error("Session ended"));
+        // handle end of chat
+        return Effect.succeed(state);
       }
     }
   }
@@ -159,18 +194,6 @@ function captureNextGroupElements(
 
   return Effect.succeed(state);
 }
-
-// export const program = Effect.gen(function* () {
-//   const a = yield* startup;
-// });
-//
-// class MyService {
-//   readonly local = 1;
-//
-//   compute = Effect.gen(this, function* () {
-//     return yield* Effect.succeed(this.local + 1);
-//   });
-// }
 
 export const runChatPipeline = (state: ChatState) =>
   pipe(

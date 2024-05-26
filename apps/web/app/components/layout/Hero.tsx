@@ -1,9 +1,21 @@
-import { Title, Text, Button, Container, Box, Group } from "@mantine/core";
+import {
+  Title,
+  Text,
+  Button,
+  Container,
+  Box,
+  Group,
+  Collapse,
+} from "@mantine/core";
 import { Dots } from "./Dots";
 import classes from "./Hero.module.css";
 import { Link } from "@remix-run/react";
+import { useState } from "react";
+import { useDisclosure } from "@mantine/hooks";
 
-export function HeroSection() {
+export function HeroSection({ formId }: { formId: string }) {
+  const [opened, { toggle }] = useDisclosure();
+
   return (
     <Container className={classes.wrapper} size={1400}>
       <Dots className={classes.dots} style={{ left: 0, top: 0 }} />
@@ -35,6 +47,7 @@ export function HeroSection() {
             size="lg"
             variant="default"
             color="gray"
+            onClick={() => toggle()}
           >
             Show Me
           </Button>
@@ -51,6 +64,9 @@ export function HeroSection() {
           </Box>
         </Group>
       </div>
+      <Collapse in={opened} py={"xl"}>
+        {opened && <webble-chatbox formId={formId} />}
+      </Collapse>
     </Container>
   );
 }

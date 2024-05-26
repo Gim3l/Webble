@@ -2,6 +2,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { HeroSection } from "~/components/layout/Hero";
 import { UseCasesSection } from "~/components/layout/UseCases";
 import { PublicHeader } from "~/components/layout/PublicHeader";
+import "~/styles/global.css";
 import {
   Box,
   Text,
@@ -9,24 +10,33 @@ import {
   Center,
   Highlight,
   Paper,
-  SimpleGrid,
   Title,
   Stack,
 } from "@mantine/core";
 import { Footer } from "~/components/layout/Footer";
+import { useLoaderData } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: "Webble | Build Super-powered Conversational Forms" },
+    {
+      name: "description",
+      content: "Build Super-powered Conversational Forms",
+    },
   ];
 };
 
+export function loader() {
+  return { formId: process.env.LANDING_FORM };
+}
+
 export default function Index() {
+  const { formId } = useLoaderData<typeof loader>();
+
   return (
     <>
       <PublicHeader />
-      <HeroSection />
+      <HeroSection formId={formId!} />
       <Center>
         <Card radius={"lg"} w={"60%"}>
           <img
