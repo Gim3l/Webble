@@ -31,10 +31,12 @@ export function sendMessage(
     message,
     sessionId,
     formId,
+    inputId,
   }: {
     message: string | number;
     sessionId: string;
     formId: string;
+    inputId: string;
   },
   cb: (data: ChatResponse) => unknown,
 ) {
@@ -48,7 +50,7 @@ export function sendMessage(
     const oldMessages = [...currentMessages].reverse();
     const newMessages = oldMessages
       .map((msg) => {
-        if (isFromInputsGroup(msg)) {
+        if (isFromInputsGroup(msg) && inputId === msg.id) {
           return { ...msg, sent: { type: "text", value: message } };
         }
         return msg;
@@ -64,16 +66,10 @@ export function sendMessage(
     headers: {
       Origin: window.location.origin,
     },
-  })
-    // .then((res) => {
-    //   messages.update((currentMessages) => [...currentMessages]);
-    //
-    //   return res;
-    // })
-    .then(async (res) => {
-      const data = await res.json();
-      return cb(data);
-    });
+  }).then(async (res) => {
+    const data = await res.json();
+    return cb(data);
+  });
 }
 
 export function handleReceivedMessage(data: ChatResponse, id?: string) {

@@ -34,7 +34,7 @@
                 <ChatBubble wasSent  index={index}  hiddenFor={(250*index) - (index * 25)}>{message.sent.value}</ChatBubble>
             {:else}
                 {#if isGroupElementType(message, "choice_input")}
-                    <Options options={message.data.options} />
+                    <Options id={message.id} options={message.data.options} />
                 {/if}
 
                 {#if isGroupElementType(message, "text_input")}

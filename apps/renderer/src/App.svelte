@@ -11,7 +11,7 @@
     nextElementId, messages, currentInput
   } from "./stores";
   import {createEventDispatcher, onMount} from "svelte";
-  export let formId = import.meta.env.PROD ? "" : "a29cfbd0-1a57-11ef-83df-7be7e0c2cb79";
+  export let formId = import.meta.env.PROD ? "" : "552b72ee-1aa9-11ef-9be2-c784356adc1e";
   export let inputValue = "";
 
   // $: {

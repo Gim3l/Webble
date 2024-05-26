@@ -12,7 +12,7 @@
 
     function sendMessageOnEnter(e: KeyboardEvent) {
         if(e.key === "Enter") {
-            sendMessage({formId: $formId, message, sessionId: $sessionId}, (data) => {
+            sendMessage({formId: $formId, message, sessionId: $sessionId, inputId: id}, (data) => {
                 handleReceivedMessage(data, id);
                 message = '';
             })
