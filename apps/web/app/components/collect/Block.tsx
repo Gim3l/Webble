@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
-import { Text, Card, Group, ThemeIcon, Paper } from "@mantine/core";
+import { Text, Group, ThemeIcon, Paper } from "@mantine/core";
 import { Icon } from "@tabler/icons-react";
 import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { ElementTypes, GroupElement } from "@webble/elements";
