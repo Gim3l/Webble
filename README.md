@@ -27,7 +27,7 @@ To run the application:
 
 1. Check that you are on node 19 or later
 2. If you
-3. You have edgedb setup. Check the [EdgeDB Quickstart Guid](https://docs.edgedb.com/get-started/quickstart) if you don't have edgedb installed locally.
+3. You have edgedb setup. Check the [EdgeDB Quickstart Guide](https://docs.edgedb.com/get-started/quickstart) if you don't have edgedb installed locally.
 4. Head into the directory `apps>web` and run the `edgedb project init`
 5. This repository uses PNPM workspaces with turbo repo, for dependency management,
    ensure you have pnpm installed.
