@@ -361,7 +361,7 @@ function Graph({
         <Panel position={"top-right"}>
           <Chat></Chat>
         </Panel>
-        <Panel position={"bottom-left"}>
+        <Panel position={"bottom-right"}>
           <Variables />
         </Panel>
         <Panel position={"bottom-center"}>
