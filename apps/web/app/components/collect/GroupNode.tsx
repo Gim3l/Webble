@@ -1,4 +1,4 @@
-import { Box, Card, Divider, Stack, Input, rem } from "@mantine/core";
+import { Box, Card, Divider, Stack, Input, rem, Button } from "@mantine/core";
 import {
   Handle,
   Node,
@@ -7,7 +7,7 @@ import {
   useReactFlow,
   useUpdateNodeInternals,
 } from "@xyflow/react";
-import { lazy, useCallback, useEffect, useRef, useState } from "react";
+import React, { lazy, useCallback, useEffect, useRef, useState } from "react";
 
 import invariant from "tiny-invariant";
 
@@ -325,6 +325,8 @@ export function CollectionNode(
   //   });
   // }, [node.data.elements, reorderItem, node.id]);
 
+  const { hoveredEdge } = useSnapshot(graphStore);
+
   return (
     <>
       <Handle type="target" position={Position.Left} id={node.id} />
@@ -333,10 +335,15 @@ export function CollectionNode(
         withBorder
         w={260}
         ref={ref}
+        px={0}
         style={{
-          borderColor: node.selected
-            ? "var(--mantine-primary-color-5)"
-            : undefined,
+          borderColor:
+            node.selected ||
+            hoveredEdge?.source === node.id ||
+            hoveredEdge?.target === node.id
+              ? "var(--mantine-primary-color-5)"
+              : undefined,
+          overflow: "visible",
         }}
       >
         <Input
@@ -356,6 +363,15 @@ export function CollectionNode(
           {node.data.elements.map((el, index) => (
             <GroupItem groupId={node.id} key={el.id} index={index} data={el} />
           ))}
+          <Button
+            size={"compact-xs"}
+            fz={"xs"}
+            py={0}
+            variant={"transparent"}
+            color={"dark.2"}
+          >
+            Add Element
+          </Button>
         </Stack>
       </Card>
     </>
@@ -479,74 +495,6 @@ export function GroupItem({
     };
   }, [data, index]);
 
-  // useEffect(() => {
-  //   const element = ref.current;
-  //   invariant(element);
-  //
-  //   return combine(
-  //     draggable({
-  //       element,
-  //       canDrag() {
-  //         return allowElementDrag;
-  //       },
-  //       getInitialData() {
-  //         return { ...data, groupId, index };
-  //       },
-  //       onDragStart() {
-  //         setIsDragging(true);
-  //       },
-  //       onDrop() {
-  //         setIsDragging(false);
-  //       },
-  //     }),
-  //     dropTargetForElements({
-  //       element: ref.current,
-  //       getData({ input }) {
-  //         return attachClosestEdge(
-  //           { index, ...data },
-  //           {
-  //             element,
-  //             input,
-  //             allowedEdges: ["top", "bottom"],
-  //           },
-  //         );
-  //       },
-  //       onDrag({ source, self }) {
-  //         const isSource = source.element === element;
-  //         if (isSource) {
-  //           setClosestEdge(null);
-  //           return;
-  //         }
-  //
-  //         const closestEdge = extractClosestEdge(self.data);
-  //
-  //         const sourceIndex = source.data.index;
-  //         invariant(typeof sourceIndex === "number");
-  //
-  //         const isItemBeforeSource = index === sourceIndex - 1;
-  //         const isItemAfterSource = index === sourceIndex + 1;
-  //
-  //         const isDropIndicatorHidden =
-  //           (isItemBeforeSource && closestEdge === "bottom") ||
-  //           (isItemAfterSource && closestEdge === "top");
-  //
-  //         if (isDropIndicatorHidden) {
-  //           setClosestEdge(null);
-  //           return;
-  //         }
-  //
-  //         setClosestEdge(closestEdge);
-  //       },
-  //       onDragLeave() {
-  //         setClosestEdge(null);
-  //       },
-  //       onDrop() {
-  //         setClosestEdge(null);
-  //       },
-  //     }),
-  //   );
-  // }, [data, index]);
-
   return (
     <Box className={"nodrag"} pos={"relative"} ref={ref}>
       <Card
@@ -554,9 +502,10 @@ export function GroupItem({
         py="xs"
         w="100%"
         opacity={isDragging ? 0.5 : 1}
+        radius={"none"}
         bg={"dark.8"}
         withBorder
-        style={{ cursor: "pointer" }}
+        style={{ cursor: "pointer", overflow: "visible" }}
       >
         <ElementComp {...data} />
       </Card>
@@ -605,16 +554,19 @@ export function ElementHandles({
   }, [ref, sourceId, targetId]);
 
   return (
-    <div ref={ref}>
+    <div ref={ref} className={"element-handle"}>
       <Handle
         type={"target"}
-        style={{ left: 0 }}
+        draggable={"false"}
+        // className={"element-handle"}
+        // style={{ left: 0 }}
         position={Position.Left}
         id={targetId}
       ></Handle>
       <Handle
+        draggable={"false"}
         type={"source"}
-        style={{ right: 0 }}
+        // style={{ right: 0 }}
         position={Position.Right}
         id={sourceId}
       ></Handle>

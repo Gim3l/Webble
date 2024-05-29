@@ -68,6 +68,7 @@ import {
   useReactFlow,
   OnConnectStart,
   OnConnectEnd,
+  updateEdge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "~/styles/global.css";
@@ -89,6 +90,7 @@ import {
   removeElementFromGroup,
   removeEmptyGroups,
   setEdges,
+  setHoveredEdge,
   setNodes,
 } from "~/components/collect/store";
 import ChoiceInputElement from "~/components/collect/elements/ChoiceInputElement";
@@ -130,6 +132,10 @@ import { Block } from "~/components/collect/Block";
 import invariant from "tiny-invariant";
 import { HeadersFunction } from "@vercel/remix";
 import { getFormChatSessions } from "~/queries/chat.queries";
+import { kEdgeTypes } from "~/components/collect/Edges";
+import FloatingEdge from "~/components/collect/FloatingEdge";
+import FloatingConnectionLine from "~/components/collect/FloatingConnectionLine";
+import BasicEdge from "~/components/collect/BasicEdge";
 
 // const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
 
@@ -194,6 +200,10 @@ export default function CollectPage() {
     </div>
   );
 }
+
+const edgeTypes = {
+  basic: BasicEdge,
+};
 
 function Graph({
   setRfInstance,
@@ -307,11 +317,65 @@ function Graph({
 
   return (
     <>
+      <Box pos={"absolute"} w={0} h={0}>
+        <svg className="react-flow__marker">
+          <defs>
+            <marker
+              className="react-flow__arrowhead"
+              id="1__color=var(--mantine-primary-color-3)&amp;type=arrowclosed"
+              markerWidth="12.5"
+              markerHeight="12.5"
+              viewBox="-10 -10 20 20"
+              markerUnits="strokeWidth"
+              orient="auto-start-reverse"
+              refX="0"
+              refY="0"
+            >
+              <polyline
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points="-5,-4 0,0 -5,4 -5,-4"
+                style={{
+                  stroke: "var(--mantine-primary-color-3)",
+                  fill: "var(--mantine-primary-color-3)",
+                  strokeWidth: 1,
+                }}
+              ></polyline>
+            </marker>
+          </defs>
+        </svg>
+        <svg className="react-flow__marker">
+          <defs>
+            <marker
+              className="react-flow__arrowhead"
+              id="2__color=var(--mantine-color-dark-3)&amp;type=arrowclosed"
+              markerWidth="12.5"
+              markerHeight="12.5"
+              viewBox="-10 -10 20 20"
+              markerUnits="strokeWidth"
+              orient="auto-start-reverse"
+              refX="0"
+              refY="0"
+            >
+              <polyline
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points="-5,-4 0,0 -5,4 -5,-4"
+                style={{
+                  stroke: "var(--mantine-color-dark-3)",
+                  fill: "var(--mantine-color-dark-3)",
+                  strokeWidth: 1,
+                }}
+              ></polyline>
+            </marker>
+          </defs>
+        </svg>
+      </Box>
       <ReactFlow
         nodeTypes={nodeTypes as unknown as any}
-        edgeTypes={{ smoothstep: DefaultEdge }}
         nodes={nodes}
         edges={edges}
+        edgeTypes={edgeTypes}
         colorMode={
           colorScheme.colorScheme === "auto"
             ? "system"
@@ -320,6 +384,12 @@ function Graph({
         onNodesChange={handleNodesChange}
         onMoveEnd={() => {
           // saveGraphStructure(reactFlow);
+        }}
+        onEdgeMouseEnter={(_data, edge) => {
+          setHoveredEdge(edge);
+        }}
+        onEdgeMouseLeave={() => {
+          setHoveredEdge(null);
         }}
         onEdgesChange={(changes) => {
           onEdgesChange(changes);
@@ -332,9 +402,16 @@ function Graph({
         }}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        connectOnClick
         onInit={setRfInstance}
         proOptions={{ hideAttribution: true }}
-        defaultEdgeOptions={{ type: "smoothstep" }}
+        defaultEdgeOptions={{
+          type: "basic",
+          style: {
+            strokeWidth: 2,
+            stroke: "var(--mantine-color-dark-3)",
+          },
+        }}
         // onSelectionContextMenu={(e) => {
         //   const selectionRect = document
         //     .querySelector(".react-flow__nodesselection-rect")

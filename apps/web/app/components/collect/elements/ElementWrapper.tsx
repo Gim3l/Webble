@@ -1,19 +1,11 @@
 import {
-  Card,
   Flex,
-  Popover,
   useMantineTheme,
   ThemeIcon,
   useMantineColorScheme,
-  Button,
   Box,
   Text,
-  Portal,
   Drawer,
-  Dialog,
-  Modal,
-  ActionIcon,
-  Tooltip,
   Select,
   rem,
   Badge,
@@ -74,7 +66,7 @@ function ElementWrapper({
   );
 
   return (
-    <div>
+    <Box>
       <Drawer
         opened={opened}
         position={"right"}
@@ -114,7 +106,7 @@ function ElementWrapper({
         onClick={() => open()}
       >
         <Flex justify={"space-between"} align={"center"}>
-          <Flex align={"center"} px={"sm"}>
+          <Flex align={"center"}>
             <ThemeIcon
               mr={6}
               variant={colorScheme.colorScheme === "dark" ? "light" : "filled"}
@@ -138,13 +130,9 @@ function ElementWrapper({
             </Badge>
           )}
         </Flex>
-        {children && (
-          <Box mt={"xs"} px={"sm"}>
-            {children}
-          </Box>
-        )}
+        {children && <Box mt={"xs"}>{children}</Box>}
       </motion.div>
-    </div>
+    </Box>
   );
 }
 

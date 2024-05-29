@@ -1,15 +1,13 @@
 import { Box, Flex, NumberInput, Stack, Text, TextInput } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
-import { Handle, Position } from "@xyflow/react";
 import { updateGroupElement } from "~/components/collect/store";
 import {
   TYPE_NUMBER_INPUT_ELEMENT,
   elementsConfig,
   GroupElement,
 } from "@webble/elements";
-import { useEffect, useRef } from "react";
-// import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-import invariant from "tiny-invariant";
+import { useRef } from "react";
+import { ElementHandles } from "~/components/collect/GroupNode";
 
 function NumberInputElement(
   element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
@@ -27,20 +25,9 @@ function NumberInputElement(
   //   });
   // }, [ref]);
   return (
-    <Box pos={"relative"}>
+    <Box pos={"relative"} className={"webble-element"}>
       <div ref={ref} draggable={"false"}>
-        <Handle
-          type={"target"}
-          style={{ left: 0 }}
-          position={Position.Left}
-          id={element.id}
-        ></Handle>
-        <Handle
-          type={"source"}
-          style={{ right: 0 }}
-          position={Position.Right}
-          id={element.id}
-        ></Handle>
+        <ElementHandles targetId={element.id} sourceId={element.id} />
       </div>
 
       <ElementWrapper

@@ -10,6 +10,7 @@ import {
 } from "@webble/elements";
 import { useEffect, useRef } from "react";
 import invariant from "tiny-invariant";
+import { ElementHandles } from "~/components/collect/GroupNode";
 // import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 function EmailInputElement(
@@ -31,18 +32,7 @@ function EmailInputElement(
   return (
     <Box pos={"relative"}>
       <div ref={ref} draggable={"false"}>
-        <Handle
-          type={"target"}
-          style={{ left: 0 }}
-          position={Position.Left}
-          id={element.id}
-        ></Handle>
-        <Handle
-          type={"source"}
-          style={{ right: 0 }}
-          position={Position.Right}
-          id={element.id}
-        ></Handle>
+        <ElementHandles targetId={element.id} sourceId={element.id} />
       </div>
       <ElementWrapper
         icon={elementsConfig[TYPE_EMAIL_INPUT_ELEMENT].icon}

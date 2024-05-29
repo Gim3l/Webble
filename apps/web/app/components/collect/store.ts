@@ -30,6 +30,7 @@ export const graphStore = proxy<{
   currentPopoverId: string | null;
   isDraggingNode: boolean;
   allowElementDrag: boolean;
+  hoveredEdge: Edge | null;
 }>({
   movingNodeId: null,
   allowElementDrag: true,
@@ -66,12 +67,30 @@ export function onConnect(connection: Connection) {
 //   setEdges((eds) => addEdge(params, eds));
 // }, []);
 
+export function setHoveredEdge(edge: Edge | null) {
+  graphStore.hoveredEdge = edge;
+}
+
 export function setSelectedNodes(selectedNodes: Node[]) {
   graphStore.selectedNodes = selectedNodes;
 }
 
 export function getNodeById(id: string) {
   return graphStore.nodes.find((n) => n.id === id);
+}
+
+export function getEdgeById(id: string) {
+  return graphStore.edges.find((e) => e.id === id);
+}
+
+export function setEdgeLayout(id: string, layout: any) {
+  return graphStore.edges.map((e) => {
+    if (e.id === id) {
+      return { ...e, data: { ...(e.data || {}), layout } };
+    }
+
+    return e;
+  });
 }
 
 export async function autoLayout() {
