@@ -23,7 +23,6 @@ import {
   Table,
   SimpleGrid,
   Box,
-  VisuallyHidden,
   Drawer,
 } from "@mantine/core";
 import {
@@ -36,7 +35,6 @@ import {
   IconMaximize,
   IconMinimize,
   IconPlayerPlay,
-  IconPlayerPlayFilled,
   IconRepeat,
   IconShare2,
   IconTrash,
@@ -109,17 +107,10 @@ import {
   getFormSubmissions,
   toggleFormVisibility,
 } from "~/queries/form.queries";
-import { dbClient } from "~/lib/db";
-import {
-  useDebouncedCallback,
-  useDisclosure,
-  useMouse,
-  useMouse,
-} from "@mantine/hooks";
+import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
-import DefaultEdge from "~/components/collect/elements/DefaultEdge";
 import {
   elementsConfig,
   ElementTypes,
@@ -128,16 +119,10 @@ import {
 } from "@webble/elements";
 import TextBubbleElement from "~/components/collect/elements/TextBubbleElement";
 import { Block } from "~/components/collect/Block";
-// import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
-import { HeadersFunction } from "@vercel/remix";
 import { getFormChatSessions } from "~/queries/chat.queries";
-import { kEdgeTypes } from "~/components/collect/Edges";
-import FloatingEdge from "~/components/collect/FloatingEdge";
-import FloatingConnectionLine from "~/components/collect/FloatingConnectionLine";
 import BasicEdge from "~/components/collect/BasicEdge";
-
-// const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges(2, 1);
+import "@mantine/tiptap/styles.css";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [{ title: data.form?.name + " | Webble" }];

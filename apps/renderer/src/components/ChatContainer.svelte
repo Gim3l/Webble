@@ -26,7 +26,13 @@
 <div class="webble-chat-container" use:scrollToBottom={$messages}>
     {#each $messages as message, index}
         {#if isGroupElementType(message, "text_bubble")}
-            <ChatBubble  index={index}  hiddenFor={(250*index) - (index * 25)}>{message.data.text}</ChatBubble>
+            <ChatBubble  index={index}  hiddenFor={(250*index) - (index * 25)}>{@html message.data.text}</ChatBubble>
+        {/if}
+
+        {#if isGroupElementType(message, "image_bubble")}
+            <ChatBubble  index={index}  hiddenFor={(250*index) - (index * 25)}><img
+                    style="max-height: 448px"
+                    src={message.data.url} width="100%" height="auto" alt="Chat item" /></ChatBubble>
         {/if}
 
         {#if isFromInputsGroup(message)}
@@ -50,7 +56,7 @@
                 {/if}
 
                 {#if isGroupElementType(message, "email_input")}
-                    <Input id="email_input" type="email" placeholder={message.data.placeholder}
+                    <Input id={message.id} type="email" placeholder={message.data.placeholder}
                            buttonLabel={message.data.buttonLabel}  />
                 {/if}
             {/if}

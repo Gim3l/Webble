@@ -29,3 +29,7 @@ export type ChoiceInputElementData = {
 export type TextBubbleElementData = {
   text: string;
 };
+
+export type ImageBubbleElementData = {
+  url: string;
+};

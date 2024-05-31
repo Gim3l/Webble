@@ -5,12 +5,15 @@ import {
   IconCheck,
   IconCursorText,
   IconHash,
+  IconLivePhoto,
   IconMessage,
+  IconPhoto,
 } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import {
   ChoiceInputElementData,
   EmailElementData,
+  ImageBubbleElementData,
   InputElementData,
   NumberInputElementData,
   TextBubbleElementData,
@@ -30,6 +33,7 @@ export const TYPE_NUMBER_INPUT_ELEMENT = "number_input";
 export const TYPE_EMAIL_INPUT_ELEMENT = "email_input";
 export const TYPE_CHOICE_INPUT_ELEMENT = "choice_input";
 export const TYPE_TEXT_BUBBLE_ELEMENT = "text_bubble";
+export const TYPE_IMAGE_BUBBLE_ELEMENT = "image_bubble";
 
 export type GroupElement<T extends string = ElementTypes> = (
   | {
@@ -58,6 +62,12 @@ export type GroupElement<T extends string = ElementTypes> = (
       type: T;
       data: T extends typeof TYPE_TEXT_BUBBLE_ELEMENT
         ? TextBubbleElementData
+        : never;
+    }
+  | {
+      type: T;
+      data: T extends typeof TYPE_IMAGE_BUBBLE_ELEMENT
+        ? ImageBubbleElementData
         : never;
     }
 ) & { groupId: string; id: string };
@@ -165,6 +175,14 @@ export const elementsConfig = {
     default: {
       text: "Hello!",
     } satisfies TextBubbleElementData,
+  },
+  [TYPE_IMAGE_BUBBLE_ELEMENT]: {
+    icon: IconPhoto,
+    group: "Bubbles",
+    name: "Image",
+    default: {
+      url: "",
+    } satisfies ImageBubbleElementData,
   },
 } satisfies ElementsConfigSchema;
 

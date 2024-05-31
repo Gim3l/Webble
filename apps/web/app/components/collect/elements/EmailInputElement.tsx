@@ -1,7 +1,7 @@
 import { Box, Flex, Stack, Text, TextInput } from "@mantine/core";
 import { Handle, Position } from "@xyflow/react";
 import ElementWrapper from "./ElementWrapper";
-import { updateNode } from "~/components/collect/store";
+import { updateGroupElement, updateNode } from "~/components/collect/store";
 import {
   elementsConfig,
   TYPE_EMAIL_INPUT_ELEMENT,
@@ -14,7 +14,7 @@ import { ElementHandles } from "~/components/collect/GroupNode";
 // import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 function EmailInputElement(
-  element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
+  element: GroupElement<typeof TYPE_EMAIL_INPUT_ELEMENT>,
 ) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -46,9 +46,12 @@ function EmailInputElement(
               variant="filled"
               defaultValue={element.data.placeholder}
               onChange={(e) => {
-                updateNode<(typeof element)["data"]>(element.id, {
-                  ...element.data,
-                  placeholder: e.target.value,
+                updateGroupElement<typeof element.type>({
+                  ...element,
+                  data: {
+                    ...element.data,
+                    placeholder: e.target.value,
+                  },
                 });
               }}
             />
@@ -59,9 +62,12 @@ function EmailInputElement(
               placeholder="Enter button label"
               variant="filled"
               onChange={(e) => {
-                updateNode<(typeof element)["data"]>(element.id, {
-                  ...element.data,
-                  buttonLabel: e.target.value,
+                updateGroupElement<typeof element.type>({
+                  ...element,
+                  data: {
+                    ...element.data,
+                    buttonLabel: e.target.value,
+                  },
                 });
               }}
             />

@@ -62,6 +62,7 @@ import {
   isGroupElement,
   TYPE_CHOICE_INPUT_ELEMENT,
   TYPE_EMAIL_INPUT_ELEMENT,
+  TYPE_IMAGE_BUBBLE_ELEMENT,
   TYPE_INPUT_ELEMENT,
   TYPE_NUMBER_INPUT_ELEMENT,
   TYPE_TEXT_BUBBLE_ELEMENT,
@@ -80,6 +81,7 @@ import {
 } from "~/components/collect/store";
 import classes from "./GroupNode.module.css";
 import { useFocusWithin } from "@mantine/hooks";
+import ImageBubbleElement from "~/components/collect/elements/ImageBubbleElement";
 
 export function reorder<Value>({
   list,
@@ -393,6 +395,7 @@ export function GroupItem({
     [TYPE_TEXT_BUBBLE_ELEMENT]: TextBubbleElement,
     [TYPE_CHOICE_INPUT_ELEMENT]: ChoiceInputElement,
     [TYPE_EMAIL_INPUT_ELEMENT]: EmailInputElement,
+    [TYPE_IMAGE_BUBBLE_ELEMENT]: ImageBubbleElement,
   };
 
   const ref = useRef<HTMLDivElement>(null);
