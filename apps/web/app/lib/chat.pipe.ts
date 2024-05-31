@@ -208,6 +208,7 @@ export function captureNextGroupElements(
       const linkedEdges = state.edges.filter(
         (edge) => edge.source === state.group?.id,
       );
+      if (linkedEdges.length === 0) return Effect.succeed(state);
       const newGroup = state.groups.find(
         (group) => group.id === linkedEdges?.[0].target,
       );
