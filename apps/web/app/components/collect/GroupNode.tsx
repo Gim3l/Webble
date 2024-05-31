@@ -402,7 +402,8 @@ export function GroupItem({
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<"top" | "bottom" | null>(null);
   const ElementComp = elementTypes[data.type];
-  const { allowElementDrag } = useSnapshot(graphStore);
+  const { allowElementDrag, selectedElement, hoveredEdge } =
+    useSnapshot(graphStore);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -508,7 +509,16 @@ export function GroupItem({
         radius={"none"}
         bg={"dark.8"}
         withBorder
-        style={{ cursor: "pointer", overflow: "visible" }}
+        style={{
+          cursor: "pointer",
+          overflow: "visible",
+          boxShadow:
+            selectedElement?.id === data.id ||
+            hoveredEdge?.sourceHandle === data.id ||
+            hoveredEdge?.targetHandle === data?.id
+              ? "inset 0 0 0 1px var(--mantine-primary-color-3)"
+              : undefined,
+        }}
       >
         <ElementComp {...data} />
       </Card>

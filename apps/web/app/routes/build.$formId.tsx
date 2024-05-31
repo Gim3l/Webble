@@ -90,6 +90,7 @@ import {
   setEdges,
   setHoveredEdge,
   setNodes,
+  setSelectedElement,
 } from "~/components/collect/store";
 import ChoiceInputElement from "~/components/collect/elements/ChoiceInputElement";
 import { useSnapshot } from "valtio/react";
@@ -104,7 +105,6 @@ import {
   createFormVariable,
   deleteFormVariable,
   getForm,
-  getFormSubmissions,
   toggleFormVisibility,
 } from "~/queries/form.queries";
 import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
@@ -367,9 +367,6 @@ function Graph({
             : colorScheme.colorScheme
         }
         onNodesChange={handleNodesChange}
-        onMoveEnd={() => {
-          // saveGraphStructure(reactFlow);
-        }}
         onEdgeMouseEnter={(_data, edge) => {
           setHoveredEdge(edge);
         }}
@@ -387,6 +384,9 @@ function Graph({
         }}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        onPaneClick={() => {
+          setSelectedElement(null);
+        }}
         connectOnClick
         onInit={setRfInstance}
         proOptions={{ hideAttribution: true }}
@@ -505,6 +505,7 @@ export function Chat() {
   }, [chatboxRef.current]);
 
   const [opened, { toggle, open, close }] = useDisclosure();
+  const { selectedElement } = useSnapshot(graphStore);
 
   return (
     <Flex justify={"end"} direction={"column"}>
@@ -522,7 +523,7 @@ export function Chat() {
       </Card>
 
       <Drawer
-        opened={opened}
+        opened={opened && !selectedElement?.id}
         onClose={close}
         withOverlay={false}
         position={"right"}

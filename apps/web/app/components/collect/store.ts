@@ -27,6 +27,7 @@ export const graphStore = proxy<{
   movingNodeId: string | null;
   selectedNodeId: string | null;
   selectedNodes: Node[];
+  selectedElement: GroupElement | null;
   currentPopoverId: string | null;
   isDraggingNode: boolean;
   allowElementDrag: boolean;
@@ -69,6 +70,10 @@ export function onConnect(connection: Connection) {
 
 export function setHoveredEdge(edge: Edge | null) {
   graphStore.hoveredEdge = edge;
+}
+
+export function setSelectedElement(element: GroupElement | null) {
+  graphStore.selectedElement = element;
 }
 
 export function setSelectedNodes(selectedNodes: Node[]) {

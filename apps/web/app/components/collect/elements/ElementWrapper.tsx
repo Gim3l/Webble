@@ -11,7 +11,7 @@ import {
   Badge,
 } from "@mantine/core";
 import { motion } from "framer-motion";
-import { graphStore, updateGroupElement } from "../store";
+import { graphStore, setSelectedElement, updateGroupElement } from "../store";
 import React, { ReactNode, useMemo } from "react";
 import { Icon, IconVariable } from "@tabler/icons-react";
 import { useContextMenu } from "mantine-contextmenu";
@@ -38,14 +38,14 @@ function ElementWrapper({
   groupId: string;
   icon: Icon;
 }) {
-  const [opened, { open, close }] = useDisclosure();
+  // const [opened, { open, close }] = useDisclosure();
   const Icon = icon;
 
   const theme = useMantineTheme();
   const { showContextMenu } = useContextMenu();
   const colorScheme = useMantineColorScheme();
 
-  const { movingNodeId } = useSnapshot(graphStore);
+  const { movingNodeId, selectedElement } = useSnapshot(graphStore);
   const nodeAnimations = useMemo(
     () => ({
       shake: () => ({
@@ -68,12 +68,14 @@ function ElementWrapper({
   return (
     <Box>
       <Drawer
-        opened={opened}
+        opened={selectedElement?.id === element.id}
         position={"right"}
-        size={"xs"}
+        size={"md"}
+        withOverlay={false}
         onClose={() => {
-          close();
-          console.log("yoo");
+          setSelectedElement(null);
+          // close();
+          // console.log("yoo");
         }}
         overlayProps={{ backgroundOpacity: 0 }}
         // withOverlay={false}
@@ -103,7 +105,9 @@ function ElementWrapper({
         }}
         animate={movingNodeId === element.id ? "shake" : "reset"}
         variants={nodeAnimations}
-        onClick={() => open()}
+        onClick={() => {
+          setSelectedElement(element);
+        }}
       >
         <Flex justify={"space-between"} align={"center"}>
           <Flex align={"center"}>
