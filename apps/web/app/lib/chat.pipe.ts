@@ -42,13 +42,6 @@ export function startup(state: ChatState): Effect.Effect<ChatState, Error> {
   if (!group) return Effect.fail(new Error("Starting group not found"));
   state.group = group;
 
-  // if (state.startingElementId) {
-  //   const element = group.data.elements.find(
-  //     (element) => element.id === state.startingElementId,
-  //   );
-  //   if (!element) return Effect.fail(new Error("Starting element not found"));
-  //   state.captures = [element];
-  // }
   return Effect.succeed(state);
 }
 
@@ -208,6 +201,7 @@ export function captureNextGroupElements(
       const linkedEdges = state.edges.filter(
         (edge) => edge.source === state.group?.id,
       );
+      if (linkedEdges.length === 0) return Effect.succeed(state);
       const newGroup = state.groups.find(
         (group) => group.id === linkedEdges?.[0].target,
       );
