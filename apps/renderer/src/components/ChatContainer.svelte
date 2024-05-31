@@ -50,7 +50,7 @@
                 {/if}
 
                 {#if isGroupElementType(message, "email_input")}
-                    <Input id="email_input" type="email" placeholder={message.data.placeholder}
+                    <Input id={message.id} type="email" placeholder={message.data.placeholder}
                            buttonLabel={message.data.buttonLabel}  />
                 {/if}
             {/if}
