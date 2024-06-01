@@ -6,8 +6,11 @@ import {
   Text,
   TextInput,
   Anchor,
+  Box,
+  Group,
 } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
+import { Grid as GiphyGrid } from "@giphy/react-components";
 
 import {
   elementsConfig,
@@ -15,19 +18,35 @@ import {
   TYPE_IMAGE_BUBBLE_ELEMENT,
 } from "@webble/elements";
 import { updateGroupElement } from "~/components/collect/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import { UnsplashLoaderData } from "~/routes/api.unsplash";
+import { GiphyFetch } from "@giphy/js-fetch-api";
 
 function ImageBubbleElement(
   element: GroupElement<typeof TYPE_IMAGE_BUBBLE_ELEMENT>,
 ) {
   const [fileSource, setFileSource] = useState("Upload");
   const fetcher = useFetcher<UnsplashLoaderData>();
+  const [giphySearch, setGiphySearch] = useState("");
 
   useEffect(() => {
     fetcher.load(`/api/unsplash?query=dogs`);
   }, []);
+
+  // const gf = new GiphyFetch("qsOMG8zWPf8Xc1BZK0CClOvwTTZ42viY");
+
+  const fetchGifs = useCallback(
+    (offset: number) => {
+      const searchParams = new URLSearchParams();
+      searchParams.set("query", giphySearch);
+      if (offset) searchParams.set("offset", offset.toString());
+      return fetch(`/api/giphy?${searchParams.toString()}`).then((res) =>
+        res.json(),
+      );
+    },
+    [giphySearch],
+  );
 
   return (
     <ElementWrapper
@@ -43,7 +62,7 @@ function ImageBubbleElement(
                 value={fileSource}
                 onChange={(source) => setFileSource(source)}
                 withItemsBorders={false}
-                data={["Upload", "Link", "Unsplash"]}
+                data={["Upload", "Link", "Unsplash", "Giphy"]}
               />
 
               {fileSource === "Link" && (
@@ -104,6 +123,44 @@ function ImageBubbleElement(
                     )}
                   </Grid>
                 </>
+              )}
+              {fileSource == "Giphy" && (
+                <Box>
+                  <Group align={"end"} mb={"md"}>
+                    <TextInput
+                      label="Search"
+                      placeholder="Search"
+                      variant="filled"
+                      onChange={(e) => setGiphySearch(e.target.value)}
+                      value={giphySearch}
+                      style={{ flexGrow: 1 }}
+                    />
+                    <img
+                      src={"/powered_by_giphy.png"}
+                      width={"100px"}
+                      alt={""}
+                    />
+                  </Group>
+
+                  <GiphyGrid
+                    key={giphySearch}
+                    width={400}
+                    columns={3}
+                    fetchGifs={fetchGifs}
+                    onGifClick={(gif, e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      updateGroupElement<typeof element.type>({
+                        ...element,
+                        data: {
+                          ...element.data,
+                          url: gif.images.fixed_height.url,
+                        },
+                      });
+                      console.log({ gif });
+                    }}
+                  />
+                </Box>
               )}
             </Stack>
           </Stack>
