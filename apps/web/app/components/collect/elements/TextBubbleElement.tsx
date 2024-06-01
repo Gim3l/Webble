@@ -59,11 +59,6 @@ function TextBubbleElement(
                   <RichTextEditor.Link />
                   <RichTextEditor.Unlink />
                 </RichTextEditor.ControlsGroup>
-
-                {/*<RichTextEditor.ControlsGroup>*/}
-                {/*  <RichTextEditor.Undo />*/}
-                {/*  <RichTextEditor.Redo />*/}
-                {/*</RichTextEditor.ControlsGroup>*/}
               </RichTextEditor.Toolbar>
             </RichTextEditor>
           </Stack>

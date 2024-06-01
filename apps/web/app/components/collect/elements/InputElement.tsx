@@ -1,4 +1,4 @@
-import { Box, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Highlight, Stack, Text, TextInput } from "@mantine/core";
 
 import ElementWrapper from "./ElementWrapper";
 import { updateGroupElement } from "~/components/collect/store";
@@ -9,6 +9,8 @@ import {
 } from "@webble/elements";
 
 import { ElementHandles } from "~/components/collect/GroupNode";
+import VariableInput from "~/components/VariableInput";
+import HighlightVariable from "~/components/collect/HighlightVariable";
 
 function InputElement(element: GroupElement<typeof TYPE_INPUT_ELEMENT>) {
   return (
@@ -20,7 +22,7 @@ function InputElement(element: GroupElement<typeof TYPE_INPUT_ELEMENT>) {
         element={element}
         configEl={
           <Stack gap="sm">
-            <TextInput
+            <VariableInput
               label="Placeholder"
               placeholder="Enter field placeholder"
               variant="filled"
@@ -28,28 +30,47 @@ function InputElement(element: GroupElement<typeof TYPE_INPUT_ELEMENT>) {
               onChange={(e) => {
                 updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
                   ...element,
-                  data: { ...element.data, placeholder: e.target.value },
+                  data: { ...element.data, placeholder: e.currentTarget.value },
+                });
+              }}
+              onOptionSubmit={(value) => {
+                updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, placeholder: value },
                 });
               }}
             />
 
-            <TextInput
-              label="Button Label"
-              defaultValue={element.data.buttonLabel}
-              placeholder="Enter button label"
+            <VariableInput
+              label="Placeholder"
+              placeholder="Enter field placeholder"
               variant="filled"
-              onChange={(e) =>
+              defaultValue={element.data.placeholder}
+              onChange={(e) => {
                 updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
                   ...element,
-                  data: { ...element.data, buttonLabel: e.target.value },
-                })
-              }
+                  data: { ...element.data, buttonLabel: e.currentTarget.value },
+                });
+              }}
+              onOptionSubmit={(value) => {
+                updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
+                  ...element,
+                  data: { ...element.data, buttonLabel: value },
+                });
+              }}
             />
           </Stack>
         }
       >
         {element.data.placeholder && (
-          <Text c={"gray"}>{element.data.placeholder}</Text>
+          <HighlightVariable
+            c={"gray"}
+            highlight={
+              element.data.placeholder.match(/{([^{}\s][^{}]*)}/g) || []
+            }
+          >
+            {element.data.placeholder}
+          </HighlightVariable>
         )}
       </ElementWrapper>
     </Box>

@@ -50,6 +50,10 @@ const theme = createTheme({
     xl: "5px 5px 3px rgba(0, 0, 0, .25)",
   },
 
+  components: {
+    TextInput: { defaultProps: { radius: "md" } },
+  },
+
   headings: {
     fontFamily: "Roboto, sans-serif",
     sizes: {
