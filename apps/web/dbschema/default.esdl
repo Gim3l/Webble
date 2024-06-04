@@ -83,4 +83,18 @@ module default {
             rewrite insert using (datetime_of_statement())
     }
   }
+
+  type Image {
+    required key: str;
+    required form: Form;
+    created_at: datetime {
+        rewrite insert using (datetime_of_statement())
+    }
+
+    access policy has_access_to_form
+      allow all
+        using (global current_user ?= .form.user) {
+            errmessage := "User does not have access to form";
+        }
+  }
 }

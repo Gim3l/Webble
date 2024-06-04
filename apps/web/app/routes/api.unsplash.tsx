@@ -1,21 +1,44 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { createApi } from "unsplash-js";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function action({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const query = url.searchParams.get("query") || "";
+  const page = Number(url.searchParams.get("page")) || 1;
   const api = createApi({
-    // Don't forget to set your access token here!
-    // See https://unsplash.com/developers
     accessKey: process.env.UNSPLASH_ACCESS_KEY || " ",
   });
 
-  const result = await api.search.getPhotos({
-    query,
-    orientation: "landscape",
-  });
+  const result = query
+    ? await api.search
+        .getPhotos({
+          query,
+          page,
+          perPage: 20,
+        })
+        .catch((err) => {
+          return { type: "error", response: null, errors: err.message || "" };
+        })
+    : await api.photos
+        .getRandom({ count: 20 })
+        .then((res) => {
+          return {
+            type: res.type,
+            response: { results: res.response as [], total_pages: 1 },
+            errors: res.errors,
+            random: true,
+          };
+        })
+        .catch((err) => {
+          return { type: "error", response: null, errors: err.message || "" };
+        });
 
-  return json(result);
+  const res =
+    result.type === "success"
+      ? { type: result.type, ...result.response }
+      : { type: result.type, message: result.errors };
+
+  return json({ ...res, page, accessKey: process.env.UNSPLASH_ACCESS_KEY });
 }
 
-export type UnsplashLoaderData = typeof loader;
+export type UnsplashData = typeof action;

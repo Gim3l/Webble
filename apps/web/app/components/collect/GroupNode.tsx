@@ -60,6 +60,7 @@ import {
   GroupElement,
   GroupNodeData,
   isGroupElement,
+  TYPE_AUDIO_BUBBLE_ELEMENT,
   TYPE_CHOICE_INPUT_ELEMENT,
   TYPE_EMAIL_INPUT_ELEMENT,
   TYPE_IMAGE_BUBBLE_ELEMENT,
@@ -82,6 +83,7 @@ import {
 import classes from "./GroupNode.module.css";
 import { useFocusWithin } from "@mantine/hooks";
 import ImageBubbleElement from "~/components/collect/elements/ImageBubbleElement";
+import AudioBubbleElement from "~/components/collect/elements/AudioBubbleElement";
 
 export function reorder<Value>({
   list,
@@ -396,6 +398,7 @@ export function GroupItem({
     [TYPE_CHOICE_INPUT_ELEMENT]: ChoiceInputElement,
     [TYPE_EMAIL_INPUT_ELEMENT]: EmailInputElement,
     [TYPE_IMAGE_BUBBLE_ELEMENT]: ImageBubbleElement,
+    [TYPE_AUDIO_BUBBLE_ELEMENT]: AudioBubbleElement,
   };
 
   const ref = useRef<HTMLDivElement>(null);
@@ -516,7 +519,7 @@ export function GroupItem({
             selectedElement?.id === data.id ||
             hoveredEdge?.sourceHandle === data.id ||
             hoveredEdge?.targetHandle === data?.id
-              ? "inset 0 0 0 1px var(--mantine-primary-color-3)"
+              ? "inset 0 0 0 3px var(--mantine-primary-color-9)"
               : undefined,
         }}
       >

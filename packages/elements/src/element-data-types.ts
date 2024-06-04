@@ -33,3 +33,7 @@ export type TextBubbleElementData = {
 export type ImageBubbleElementData = {
   url: string;
 };
+
+export type AudioBubbleElementData = {
+  url: string;
+};
