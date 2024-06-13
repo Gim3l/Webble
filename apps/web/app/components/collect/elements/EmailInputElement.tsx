@@ -1,33 +1,18 @@
-import { Box, Flex, Stack, Text, TextInput } from "@mantine/core";
-import { Handle, Position } from "@xyflow/react";
+import { Box, Stack, Text, TextInput } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
-import { updateGroupElement, updateNode } from "~/components/collect/store";
+import { updateGroupElement } from "~/components/collect/store";
 import {
   elementsConfig,
   TYPE_EMAIL_INPUT_ELEMENT,
-  GroupElement,
-  TYPE_NUMBER_INPUT_ELEMENT,
+  EmailInputGroupElement,
+  variableRegex,
 } from "@webble/elements";
-import { useEffect, useRef } from "react";
-import invariant from "tiny-invariant";
+import { useRef } from "react";
 import { ElementHandles } from "~/components/collect/GroupNode";
-// import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import HighlightVariable from "~/components/collect/HighlightVariable";
 
-function EmailInputElement(
-  element: GroupElement<typeof TYPE_EMAIL_INPUT_ELEMENT>,
-) {
+function EmailInputElement(element: EmailInputGroupElement) {
   const ref = useRef<HTMLDivElement>(null);
-
-  // useEffect(() => {
-  //   invariant(ref.current);
-  //
-  //   return draggable({
-  //     element: ref.current,
-  //     canDrag() {
-  //       return false;
-  //     },
-  //   });
-  // }, [ref]);
 
   return (
     <Box pos={"relative"}>
@@ -46,7 +31,7 @@ function EmailInputElement(
               variant="filled"
               defaultValue={element.data.placeholder}
               onChange={(e) => {
-                updateGroupElement<typeof element.type>({
+                updateGroupElement<EmailInputGroupElement>({
                   ...element,
                   data: {
                     ...element.data,
@@ -62,7 +47,7 @@ function EmailInputElement(
               placeholder="Enter button label"
               variant="filled"
               onChange={(e) => {
-                updateGroupElement<typeof element.type>({
+                updateGroupElement<EmailInputGroupElement>({
                   ...element,
                   data: {
                     ...element.data,
@@ -75,7 +60,12 @@ function EmailInputElement(
         }
       >
         {element.data.placeholder && (
-          <Text c={"gray"}>{element.data.placeholder}</Text>
+          <HighlightVariable
+            c={"gray"}
+            highlight={element.data.placeholder.match(variableRegex) || []}
+          >
+            {element.data.placeholder}
+          </HighlightVariable>
         )}
       </ElementWrapper>
     </Box>

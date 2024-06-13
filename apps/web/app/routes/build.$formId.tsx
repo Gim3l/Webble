@@ -107,7 +107,11 @@ import {
   getForm,
   toggleFormVisibility,
 } from "~/queries/form.queries";
-import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useScrollIntoView,
+} from "@mantine/hooks";
 import { auth } from "~/services/auth.server";
 import { ConstraintViolationError } from "edgedb";
 import { useForm } from "@mantine/form";
@@ -473,22 +477,23 @@ export function Chat() {
   const chatboxRef = useRef<HTMLElement>(null);
   const reactFlow = useReactFlow();
 
-  const viewport = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () =>
-    viewport.current!.scrollTo({
-      top: viewport.current!.scrollHeight,
-      behavior: "smooth",
+  // const viewport = useRef<HTMLDivElement>(null);
+  const { scrollIntoView, targetRef, scrollableRef } =
+    useScrollIntoView<HTMLDivElement>({
+      offset: 0,
     });
 
   useEffect(() => {
     if (!chatboxRef.current) return;
+
     const handler = (e: unknown) => {
       const nodes = reactFlow.getNodes().map((node) => {
         if (node.id === e.detail.groupId) return { ...node, selected: true };
         return { ...node, selected: false };
       });
-      scrollToBottom();
+
+      scrollIntoView();
+
       reactFlow.setNodes(nodes);
 
       reactFlow.fitView({
@@ -502,17 +507,23 @@ export function Chat() {
 
     return () =>
       chatboxRef.current?.removeEventListener("targetChange", handler);
-  }, [chatboxRef.current]);
+  }, [chatboxRef.current, scrollIntoView]);
 
   const [opened, { toggle, open, close }] = useDisclosure();
   const { selectedElement } = useSnapshot(graphStore);
+
+  useEffect(() => {
+    if (opened) scrollIntoView();
+  }, [opened, scrollIntoView]);
 
   return (
     <Flex justify={"end"} direction={"column"}>
       <Card>
         <Button
           size={"xs"}
-          onClick={() => open()}
+          onClick={() => {
+            open();
+          }}
           color={"teal"}
           leftSection={
             <IconPlayerPlay style={{ width: rem(16), height: rem(16) }} />
@@ -543,13 +554,14 @@ export function Chat() {
         }
       >
         <Card w={400}>
-          <ScrollArea h={500} viewportRef={viewport}>
+          <ScrollArea h={500} viewportRef={scrollableRef}>
             <webble-chatbox
               key={params.formId}
               ref={chatboxRef}
               formId={params.formId}
               // style={{ height: "100%", borderRadius: 8, overflow: "auto" }}
             />
+            <div ref={targetRef}></div>
           </ScrollArea>
         </Card>
       </Drawer>

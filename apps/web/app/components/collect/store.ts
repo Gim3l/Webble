@@ -364,9 +364,7 @@ export function addNode<T extends Node>(node: T) {
   graphStore.nodes = [...graphStore.nodes, node];
 }
 
-export function updateGroupElement<T extends ElementTypes>(
-  element: GroupElement<T>,
-) {
+export function updateGroupElement<T extends GroupElement>(element: T) {
   if (!element.groupId) return;
 
   graphStore.nodes = graphStore.nodes.map((node) => {

@@ -4,26 +4,14 @@ import { updateGroupElement } from "~/components/collect/store";
 import {
   TYPE_NUMBER_INPUT_ELEMENT,
   elementsConfig,
-  GroupElement,
+  NumberInputGroupElement,
 } from "@webble/elements";
 import { useRef } from "react";
 import { ElementHandles } from "~/components/collect/GroupNode";
 
-function NumberInputElement(
-  element: GroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>,
-) {
+function NumberInputElement(element: NumberInputGroupElement) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // useEffect(() => {
-  //   invariant(ref.current);
-  //
-  //   return draggable({
-  //     element: ref.current,
-  //     canDrag() {
-  //       return false;
-  //     },
-  //   });
-  // }, [ref]);
   return (
     <Box pos={"relative"} className={"webble-element"}>
       <div ref={ref} draggable={"false"}>
@@ -43,7 +31,7 @@ function NumberInputElement(
               variant="filled"
               defaultValue={element.data.placeholder}
               onChange={(e) =>
-                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                updateGroupElement<NumberInputGroupElement>({
                   ...element,
                   data: { ...element.data, placeholder: e.target.value },
                 })
@@ -56,7 +44,7 @@ function NumberInputElement(
               placeholder="Enter field placeholder"
               variant="filled"
               onChange={(e) =>
-                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                updateGroupElement<NumberInputGroupElement>({
                   ...element,
                   data: { ...element.data, buttonLabel: e.target.value },
                 })
@@ -71,7 +59,7 @@ function NumberInputElement(
               stepHoldDelay={500}
               stepHoldInterval={100}
               onChange={(v) =>
-                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                updateGroupElement<NumberInputGroupElement>({
                   ...element,
                   data: { ...element.data, min: Number(v) },
                 })
@@ -86,7 +74,7 @@ function NumberInputElement(
               stepHoldDelay={500}
               stepHoldInterval={100}
               onChange={(v) =>
-                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                updateGroupElement<NumberInputGroupElement>({
                   ...element,
                   data: { ...element.data, max: Number(v) },
                 })
@@ -101,7 +89,7 @@ function NumberInputElement(
               stepHoldDelay={500}
               stepHoldInterval={100}
               onChange={(v) =>
-                updateGroupElement<typeof TYPE_NUMBER_INPUT_ELEMENT>({
+                updateGroupElement<NumberInputGroupElement>({
                   ...element,
                   data: { ...element.data, step: Number(v) },
                 })

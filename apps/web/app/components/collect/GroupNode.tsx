@@ -63,10 +63,12 @@ import {
   TYPE_AUDIO_BUBBLE_ELEMENT,
   TYPE_CHOICE_INPUT_ELEMENT,
   TYPE_EMAIL_INPUT_ELEMENT,
+  TYPE_EMBED_BUBBLE_ELEMENT,
   TYPE_IMAGE_BUBBLE_ELEMENT,
   TYPE_INPUT_ELEMENT,
   TYPE_NUMBER_INPUT_ELEMENT,
   TYPE_TEXT_BUBBLE_ELEMENT,
+  TYPE_VIDEO_BUBBLE_ELEMENT,
 } from "@webble/elements";
 import InputElement from "~/components/collect/elements/InputElement";
 import NumberInputElement from "~/components/collect/elements/NumberInputElement";
@@ -84,6 +86,8 @@ import classes from "./GroupNode.module.css";
 import { useFocusWithin } from "@mantine/hooks";
 import ImageBubbleElement from "~/components/collect/elements/ImageBubbleElement";
 import AudioBubbleElement from "~/components/collect/elements/AudioBubbleElement";
+import VideoBubbleElement from "~/components/collect/elements/VideoBubbleElement";
+import EmbedBubbleElement from "~/components/collect/elements/EmbedBubbleElement";
 
 export function reorder<Value>({
   list,
@@ -177,7 +181,6 @@ export function CollectionNode(
           return source.data.groupId === node.id;
         },
         onDrop({ location, source }) {
-          console.log({ location, source });
           const target = location.current.dropTargets[0];
           if (!target) {
             return;
@@ -210,9 +213,6 @@ export function CollectionNode(
             // alert(targetData.index);
             if (closestEdgeOfTarget === "top") {
               addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
-
-              removeElementFromGroup(sourceData.groupId, sourceData.id);
-              removeEmptyGroups();
             }
 
             if (closestEdgeOfTarget === "bottom") {
@@ -252,82 +252,6 @@ export function CollectionNode(
       controller.abort();
     };
   }, [node.data.elements, reorderItem, node.id]);
-
-  // useEffect(() => {
-  //   return monitorForElements({
-  //     canMonitor({ source }) {
-  //       return source.data.groupId === node.id;
-  //     },
-  //     onDrop({ location, source }) {
-  //       console.log({ location, source });
-  //       const target = location.current.dropTargets[0];
-  //       if (!target) {
-  //         return;
-  //       }
-  //
-  //       const sourceData = source.data;
-  //       const targetData = target.data;
-  //       if (!isGroupElement(sourceData) || !isGroupElement(targetData)) {
-  //         return;
-  //       }
-  //
-  //       const closestEdgeOfTarget = extractClosestEdge(targetData);
-  //
-  //       let indexOfTarget = node.data.elements.findIndex(
-  //         (item) => item.id === targetData.id,
-  //       );
-  //
-  //       // handle moving items between groups
-  //       if (sourceData.groupId !== targetData.groupId) {
-  //         const targetGroup = reactFlow
-  //           .getNodes()
-  //           .find((node) => node.id === targetData.groupId);
-  //
-  //         if (!targetGroup) return;
-  //
-  //         indexOfTarget = targetGroup.data.elements.findIndex(
-  //           (item) => item.id === targetData.id,
-  //         );
-  //
-  //         // alert(targetData.index);
-  //         if (closestEdgeOfTarget === "top") {
-  //           addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
-  //
-  //           removeElementFromGroup(sourceData.groupId, sourceData.id);
-  //           removeEmptyGroups();
-  //         }
-  //
-  //         if (closestEdgeOfTarget === "bottom") {
-  //           addElementToGroup(
-  //             targetData.groupId,
-  //             sourceData,
-  //             indexOfTarget + 1,
-  //             // targetData.index + 1,
-  //           );
-  //           removeElementFromGroup(sourceData.groupId, sourceData.id);
-  //           removeEmptyGroups();
-  //         }
-  //
-  //         return;
-  //       }
-  //
-  //       if (indexOfTarget < 0) {
-  //         return;
-  //       }
-  //
-  //       if (target.data) {
-  //         reorderItem({
-  //           startIndex: sourceData.index,
-  //           indexOfTarget,
-  //           closestEdgeOfTarget,
-  //         });
-  //       }
-  //
-  //       triggerPostMoveFlash(source.element);
-  //       updateNodeInternals(node.id);
-  //     },
-  //   });
-  // }, [node.data.elements, reorderItem, node.id]);
 
   const { hoveredEdge } = useSnapshot(graphStore);
 
@@ -399,11 +323,14 @@ export function GroupItem({
     [TYPE_EMAIL_INPUT_ELEMENT]: EmailInputElement,
     [TYPE_IMAGE_BUBBLE_ELEMENT]: ImageBubbleElement,
     [TYPE_AUDIO_BUBBLE_ELEMENT]: AudioBubbleElement,
+    [TYPE_VIDEO_BUBBLE_ELEMENT]: VideoBubbleElement,
+    [TYPE_EMBED_BUBBLE_ELEMENT]: EmbedBubbleElement,
   };
 
   const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [closestEdge, setClosestEdge] = useState<"top" | "bottom" | null>(null);
+  const reactFlow = useReactFlow<Node<GroupNodeData, "container">>();
   const ElementComp = elementTypes[data.type];
   const { allowElementDrag, selectedElement, hoveredEdge } =
     useSnapshot(graphStore);
@@ -489,8 +416,47 @@ export function GroupItem({
           onDragLeave() {
             setClosestEdge(null);
           },
-          onDrop() {
+          onDrop({ self, source }) {
             setClosestEdge(null);
+
+            // handle moving items from sidebar to group
+            if (source.data.groupId) return;
+            const closestEdgeOfTarget = extractClosestEdge(self.data);
+
+            const sourceData = { ...source.data, groupId };
+            const targetData = { ...data };
+            if (!isGroupElement(sourceData) || !isGroupElement(targetData)) {
+              return;
+            }
+
+            const targetGroup = reactFlow
+              .getNodes()
+              .find((node) => node.id === targetData.groupId);
+
+            if (!targetGroup) return;
+
+            const indexOfTarget = targetGroup.data.elements.findIndex(
+              (item) => item.id === targetData.id,
+            );
+
+            // alert(targetData.index);
+            if (closestEdgeOfTarget === "top") {
+              addElementToGroup(targetData.groupId, sourceData, indexOfTarget);
+            }
+
+            if (closestEdgeOfTarget === "bottom") {
+              addElementToGroup(
+                targetData.groupId,
+                sourceData,
+                indexOfTarget + 1,
+                // targetData.index + 1,
+              );
+            }
+          },
+          onDragEnter({ source, self }) {
+            const closestEdge = extractClosestEdge(self.data);
+            if (source.data.groupId) return;
+            setClosestEdge(closestEdge);
           },
         }),
       );

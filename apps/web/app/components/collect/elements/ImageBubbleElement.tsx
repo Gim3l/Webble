@@ -15,16 +15,11 @@ import {
   Center,
   rem,
   AspectRatio,
-  Overlay,
 } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
 import { Grid as GiphyGrid } from "@giphy/react-components";
 
-import {
-  elementsConfig,
-  GroupElement,
-  TYPE_IMAGE_BUBBLE_ELEMENT,
-} from "@webble/elements";
+import { elementsConfig, ImageBubbleGroupElement } from "@webble/elements";
 import { updateGroupElement } from "~/components/collect/store";
 import { useCallback, useEffect, useState } from "react";
 import { useFetcher, useParams } from "@remix-run/react";
@@ -34,9 +29,7 @@ import "@mantine/dropzone/styles.css";
 import { Dropzone, IMAGE_MIME_TYPE } from "@mantine/dropzone";
 import { IconPhoto, IconUpload, IconX } from "@tabler/icons-react";
 
-function ImageBubbleElement(
-  element: GroupElement<typeof TYPE_IMAGE_BUBBLE_ELEMENT>,
-) {
+function ImageBubbleElement(element: ImageBubbleGroupElement) {
   const [fileSource, setFileSource] = useState("Upload");
   const unsplashFetcher = useFetcher<UnsplashData>({ key: "unsplash" });
   const [giphySearch, setGiphySearch] = useState("");
@@ -75,7 +68,7 @@ function ImageBubbleElement(
 
   useEffect(() => {
     if (uploadFetcher.data?.success && uploadFetcher.data?.url) {
-      updateGroupElement<typeof element.type>({
+      updateGroupElement<ImageBubbleGroupElement>({
         ...element,
         data: {
           ...element.data,
@@ -181,7 +174,7 @@ function ImageBubbleElement(
                     placeholder="Enter URL"
                     variant="filled"
                     onChange={(e) => {
-                      updateGroupElement<typeof element.type>({
+                      updateGroupElement<ImageBubbleGroupElement>({
                         ...element,
                         data: {
                           ...element.data,
@@ -228,7 +221,7 @@ function ImageBubbleElement(
                                 const data = (await res.json()) as {
                                   url: string;
                                 };
-                                updateGroupElement<typeof element.type>({
+                                updateGroupElement<ImageBubbleGroupElement>({
                                   ...element,
                                   data: {
                                     ...element.data,

@@ -1,42 +1,22 @@
 import {
-  Grid,
-  Input,
   SegmentedControl,
   Stack,
   Text,
   TextInput,
-  Anchor,
-  Box,
   Group,
-  Pagination,
-  LoadingOverlay,
-  Image,
-  HoverCard,
-  Center,
   rem,
-  AspectRatio,
-  Overlay,
 } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
-import { Grid as GiphyGrid } from "@giphy/react-components";
 
-import {
-  elementsConfig,
-  GroupElement,
-  TYPE_IMAGE_BUBBLE_ELEMENT,
-} from "@webble/elements";
+import { AudioBubbleGroupElement, elementsConfig } from "@webble/elements";
 import { updateGroupElement } from "~/components/collect/store";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher, useParams } from "@remix-run/react";
-import { UnsplashData } from "~/routes/api.unsplash";
-import { useDebouncedValue } from "@mantine/hooks";
 import "@mantine/dropzone/styles.css";
 import { Dropzone } from "@mantine/dropzone";
-import { IconMusicUp, IconPhoto, IconUpload, IconX } from "@tabler/icons-react";
+import { IconMusicUp, IconUpload, IconX } from "@tabler/icons-react";
 
-function AudioBubbleElement(
-  element: GroupElement<typeof TYPE_IMAGE_BUBBLE_ELEMENT>,
-) {
+function AudioBubbleElement(element: AudioBubbleGroupElement) {
   const [fileSource, setFileSource] = useState("Upload");
 
   const uploadFetcher = useFetcher<
@@ -48,7 +28,7 @@ function AudioBubbleElement(
 
   useEffect(() => {
     if (uploadFetcher.data?.success && uploadFetcher.data?.url) {
-      updateGroupElement<typeof element.type>({
+      updateGroupElement<AudioBubbleGroupElement>({
         ...element,
         data: {
           ...element.data,
@@ -154,7 +134,7 @@ function AudioBubbleElement(
                     placeholder="Enter URL"
                     variant="filled"
                     onChange={(e) => {
-                      updateGroupElement<typeof element.type>({
+                      updateGroupElement<AudioBubbleGroupElement>({
                         ...element,
                         data: {
                           ...element.data,

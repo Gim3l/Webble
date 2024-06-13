@@ -6,6 +6,10 @@ import {
   GroupElement,
   GroupNodeData,
   isFromInputsGroup,
+  isGroupElementType,
+  TYPE_IMAGE_BUBBLE_ELEMENT,
+  TYPE_TEXT_BUBBLE_ELEMENT,
+  variableRegex,
 } from "@webble/elements";
 
 export type ChatState = {
@@ -22,6 +26,78 @@ export type ChatState = {
     { value: number | string; type: "variable" | "input" }
   >;
 };
+
+function withVariables(
+  groupElement: GroupElement,
+  state: ChatState,
+): GroupElement {
+  const variables = state.values;
+
+  if (isGroupElementType(groupElement, TYPE_IMAGE_BUBBLE_ELEMENT)) {
+    const url = groupElement.data.url;
+    const variableMatches = url.match(variableRegex);
+    variableMatches?.forEach((match) => {
+      const variableName = match.replace(/[{}]/g, "");
+
+      if (variables[variableName]) {
+        const variableValue = variables[variableName].value;
+        groupElement.data.url = groupElement.data.url.replace(
+          match,
+          variableValue.toString(),
+        );
+      }
+    });
+  }
+
+  if (isGroupElementType(groupElement, TYPE_TEXT_BUBBLE_ELEMENT)) {
+    const text = groupElement.data.text;
+    const variableMatches = text.match(variableRegex);
+    variableMatches?.forEach((match) => {
+      const variableName = match.replace(/[{}]/g, "");
+
+      if (variables[variableName]) {
+        const variableValue = variables[variableName].value;
+        groupElement.data.text = groupElement.data.text.replace(
+          match,
+          variableValue.toString(),
+        );
+      }
+    });
+  }
+
+  if (isFromInputsGroup(groupElement)) {
+    const placeholderMatches =
+      groupElement.data.placeholder.match(variableRegex);
+    const buttonLabelMatches =
+      groupElement.data.buttonLabel.match(variableRegex);
+
+    placeholderMatches?.forEach((match) => {
+      const variableName = match.replace(/[{}]/g, "");
+
+      if (variables[variableName]) {
+        const variableValue = variables[variableName].value;
+        groupElement.data.placeholder = groupElement.data.placeholder.replace(
+          match,
+          variableValue.toString(),
+        );
+      }
+    });
+
+    buttonLabelMatches?.forEach((match) => {
+      const variableName = match.replace(/[{}]/g, "");
+
+      if (variables[variableName]) {
+        const variableValue = variables[variableName].value;
+        groupElement.data.buttonLabel = groupElement.data.placeholder.replace(
+          match,
+          variableValue.toString(),
+        );
+      }
+    });
+  }
+
+  return groupElement;
+}
 
 export function startup(state: ChatState): Effect.Effect<ChatState, Error> {
   state.initialLastCapturedEl = state.lastCapturedEl;
@@ -218,6 +294,15 @@ export function captureNextGroupElements(
   return Effect.succeed(state);
 }
 
+export function applyVariables(
+  state: ChatState,
+): Effect.Effect<ChatState, Error> {
+  state.captures = state.captures.map((element) =>
+    withVariables(element, state),
+  );
+  return Effect.succeed(state);
+}
+
 export const runChatPipeline = (state: ChatState) =>
   pipe(
     Effect.succeed(state),
@@ -226,4 +311,5 @@ export const runChatPipeline = (state: ChatState) =>
     // PRE-JUMP
     Effect.flatMap((state) => jumpIfNecessary(state)),
     Effect.flatMap((state) => captureNextGroupElements(state)),
+    Effect.flatMap((state) => applyVariables(state)),
   );

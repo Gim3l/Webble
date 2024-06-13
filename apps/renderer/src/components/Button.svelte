@@ -1,16 +1,13 @@
 <script lang="ts">
-    import {createEventDispatcher} from "svelte";
+    import { createEventDispatcher } from "svelte";
 
+    export let type: "submit" | "reset" | "button" = "button";
     const dispatch = createEventDispatcher();
 
     function handleClick() {
-        dispatch("click")
+        dispatch("click");
     }
 </script>
-
-<button on:click={handleClick} class="webble-button">
-    <slot></slot>
-</button>
 
 <style>
     .webble-button {
@@ -36,3 +33,7 @@
         border: 1px solid var(--webble-button-border-focus);
     }
 </style>
+
+<button type={type} on:click={handleClick} class="webble-button">
+    <slot></slot>
+</button>

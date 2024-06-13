@@ -1,18 +1,14 @@
-import { Box, Highlight, Stack, Text, TextInput } from "@mantine/core";
+import { Box, Stack } from "@mantine/core";
 
 import ElementWrapper from "./ElementWrapper";
 import { updateGroupElement } from "~/components/collect/store";
-import {
-  TYPE_INPUT_ELEMENT,
-  elementsConfig,
-  GroupElement,
-} from "@webble/elements";
+import { elementsConfig, InputGroupElement } from "@webble/elements";
 
 import { ElementHandles } from "~/components/collect/GroupNode";
 import VariableInput from "~/components/VariableInput";
 import HighlightVariable from "~/components/collect/HighlightVariable";
 
-function InputElement(element: GroupElement<typeof TYPE_INPUT_ELEMENT>) {
+function InputElement(element: InputGroupElement) {
   return (
     <Box pos={"relative"}>
       <ElementHandles targetId={element.id} sourceId={element.id} />
@@ -28,13 +24,13 @@ function InputElement(element: GroupElement<typeof TYPE_INPUT_ELEMENT>) {
               variant="filled"
               defaultValue={element.data.placeholder}
               onChange={(e) => {
-                updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
+                updateGroupElement<InputGroupElement>({
                   ...element,
                   data: { ...element.data, placeholder: e.currentTarget.value },
                 });
               }}
               onOptionSubmit={(value) => {
-                updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
+                updateGroupElement<InputGroupElement>({
                   ...element,
                   data: { ...element.data, placeholder: value },
                 });
@@ -42,18 +38,18 @@ function InputElement(element: GroupElement<typeof TYPE_INPUT_ELEMENT>) {
             />
 
             <VariableInput
-              label="Placeholder"
-              placeholder="Enter field placeholder"
+              label="Button Label"
+              placeholder="Enter button label"
               variant="filled"
-              defaultValue={element.data.placeholder}
+              defaultValue={element.data.buttonLabel}
               onChange={(e) => {
-                updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
+                updateGroupElement<InputGroupElement>({
                   ...element,
                   data: { ...element.data, buttonLabel: e.currentTarget.value },
                 });
               }}
               onOptionSubmit={(value) => {
-                updateGroupElement<typeof TYPE_INPUT_ELEMENT>({
+                updateGroupElement<InputGroupElement>({
                   ...element,
                   data: { ...element.data, buttonLabel: value },
                 });

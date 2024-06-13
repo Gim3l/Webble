@@ -1,36 +1,20 @@
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Card,
-  Flex,
-  FocusTrap,
-  Group,
-  Input,
-  Paper,
-  rem,
-  Stack,
-} from "@mantine/core";
+import { Box, Button, Group, Input, Paper, rem, Stack } from "@mantine/core";
 import { IconQuestionMark } from "@tabler/icons-react";
 import { updateGroupElement } from "../store";
-import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import ElementWrapper from "./ElementWrapper";
 import { TYPE_CHOICE_INPUT_ELEMENT, elementsConfig } from "./config";
 import { nanoid } from "nanoid";
 import { useCallback } from "react";
-import { GroupElement } from "@webble/elements";
-import { op } from "../../../../dbschema/edgeql-js/operators";
+import { ChoiceInputGroupElement } from "@webble/elements";
 import { ElementHandles } from "~/components/collect/GroupNode";
 
-function ChoiceInputElement(
-  element: GroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>,
-) {
+function ChoiceInputElement(element: ChoiceInputGroupElement) {
   const deleteOption = useCallback(
     (key: string) => {
       if (element.data.options.length === 1) return;
       const items = [...element.data.options.filter((i) => i.id !== key)];
 
-      updateGroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>({
+      updateGroupElement<ChoiceInputGroupElement>({
         ...element,
         data: {
           ...element.data,
@@ -47,7 +31,7 @@ function ChoiceInputElement(
       const index = items.findIndex((option) => option.id === key);
       items[index] = { ...items[index], ...data };
 
-      updateGroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>({
+      updateGroupElement<ChoiceInputGroupElement>({
         ...element,
         data: {
           ...element.data,
@@ -64,7 +48,7 @@ function ChoiceInputElement(
       const index = items.findIndex((item) => item.id === key);
       items.splice(index + 1, 0, { id: nanoid(), label: "" });
 
-      updateGroupElement<typeof TYPE_CHOICE_INPUT_ELEMENT>({
+      updateGroupElement<ChoiceInputGroupElement>({
         ...element,
         data: {
           ...element.data,

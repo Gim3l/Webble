@@ -11,9 +11,14 @@ import {
   Badge,
 } from "@mantine/core";
 import { motion } from "framer-motion";
-import { graphStore, setSelectedElement, updateGroupElement } from "../store";
+import {
+  graphStore,
+  removeElementFromGroup,
+  setSelectedElement,
+  updateGroupElement,
+} from "../store";
 import React, { ReactNode, useMemo } from "react";
-import { Icon, IconVariable } from "@tabler/icons-react";
+import { Icon, IconTrash, IconVariable } from "@tabler/icons-react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useSnapshot } from "valtio/react";
 import {
@@ -108,6 +113,14 @@ function ElementWrapper({
         onClick={() => {
           setSelectedElement(element);
         }}
+        onContextMenu={showContextMenu([
+          {
+            key: "delete",
+            color: "red",
+            icon: <IconTrash />,
+            onClick: () => removeElementFromGroup(element.groupId, element.id),
+          },
+        ])}
       >
         <Flex justify={"space-between"} align={"center"}>
           <Flex align={"center"}>
