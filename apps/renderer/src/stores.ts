@@ -1,5 +1,11 @@
 import { writable } from "svelte/store";
-import { type GroupElement, isFromInputsGroup } from "@webble/elements";
+import {
+    type GroupElement,
+    isFromInputsGroup,
+    isGroupElementType,
+    TYPE_REQUEST_LOGIC_ELEMENT,
+    TYPE_SCRIPT_LOGIC_ELEMENT,
+} from "@webble/elements";
 
 export let formId = writable<string>();
 export let bubbleConfig = writable<{ loadingDuration: number; transitionDuration: number }>({
@@ -22,7 +28,8 @@ type SentMessage = {
 };
 
 type ChatResponse = {
-    sessionId?: string;
+    sessionId: string;
+    formId: string;
     captures: GroupElement[];
 };
 
@@ -36,7 +43,7 @@ export function sendMessage(
         message: string | number;
         sessionId: string;
         formId: string;
-        inputId: string;
+        inputId?: string;
     },
     cb: (data: ChatResponse) => unknown,
 ) {
@@ -46,19 +53,21 @@ export function sendMessage(
     formData.set("message", String(message));
     formData.set("sessionId", sessionId);
 
-    messages.update((currentMessages) => {
-        const oldMessages = [...currentMessages].reverse();
-        const newMessages = oldMessages
-            .map((msg) => {
-                if (isFromInputsGroup(msg) && inputId === msg.id) {
-                    return { ...msg, sent: { type: "text", value: message } };
-                }
-                return msg;
-            })
-            .reverse();
+    if (inputId) {
+        messages.update((currentMessages) => {
+            const oldMessages = [...currentMessages].reverse();
+            const newMessages = oldMessages
+                .map((msg) => {
+                    if (isFromInputsGroup(msg) && inputId === msg.id) {
+                        return { ...msg, sent: { type: "text", value: message } };
+                    }
+                    return msg;
+                })
+                .reverse();
 
-        return [...newMessages];
-    });
+            return [...newMessages];
+        });
+    }
 
     fetch(`${import.meta.env.VITE_WEBBLE_API_URL}/engage/${formId}`, {
         method: "POST",
@@ -72,6 +81,37 @@ export function sendMessage(
     });
 }
 
+function runLogic(capture: GroupElement, callbackData?: { sessionId: string; formId: string }) {
+    if (isGroupElementType(capture, TYPE_SCRIPT_LOGIC_ELEMENT)) {
+        alert("running logic " + capture.type);
+        eval(capture.data.code);
+    }
+
+    if (isGroupElementType(capture, TYPE_REQUEST_LOGIC_ELEMENT) && callbackData) {
+        const { sessionId, formId } = callbackData;
+        const url = new URL(capture.data.request.url);
+        const keys = capture.data.request.queryParams
+            ? Object.keys(capture.data.request.queryParams)
+            : [];
+
+        for (const key of keys) {
+            const value = capture.data.request.queryParams?.[key];
+            if (value) url.searchParams.append(key, value);
+        }
+
+        alert(url.toString());
+        fetch(url.toString(), {
+            method: capture.data.request.method,
+            body: capture.data.request.method === "GET" ? undefined : capture.data.request.body,
+            headers: capture.data.request.headers,
+        }).then(async (res) => {
+            sendMessage({ formId, message: await res.text(), sessionId }, (data) => {
+                handleReceivedMessage(data);
+            });
+        });
+    }
+}
+
 export function handleReceivedMessage(data: ChatResponse, id?: string) {
     if (data.captures?.length) {
         pendingCaptures.set([...(data.captures.slice(1) || [])]);
@@ -81,6 +121,8 @@ export function handleReceivedMessage(data: ChatResponse, id?: string) {
             let delay = typingTime * index + 1;
 
             setTimeout(() => {
+                runLogic(capture, { sessionId: data.sessionId, formId: data.formId });
+
                 messages.update((currentMessages) => {
                     return [...currentMessages, capture];
                 });
@@ -97,4 +139,22 @@ export function handleReceivedMessage(data: ChatResponse, id?: string) {
     // ) {
     //   currentInput.set(lastElement);
     // }
+}
+
+export function displayNextCapture(
+    currentPendingCaptures: GroupElement[],
+    data: { sessionId: string; formId: string },
+    wasSent?: boolean,
+) {
+    if (!currentPendingCaptures.length || wasSent) return;
+    const capture = currentPendingCaptures[0];
+
+    runLogic(capture, data);
+
+    pendingCaptures.update((currentCaptures) => {
+        return [...currentCaptures.slice(1)];
+    });
+    messages.update((currentMessages) => {
+        return [...currentMessages, capture];
+    });
 }

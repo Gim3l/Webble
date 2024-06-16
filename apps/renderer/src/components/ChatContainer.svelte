@@ -10,10 +10,12 @@
         isFromInputsGroup,
         isGroupElement,
         isGroupElementType,
+        isGroupElementTypes,
         parseVideoUrl,
         TYPE_TEXT_BUBBLE_ELEMENT,
     } from "@webble/elements";
     import Audio from "./Audio.svelte";
+    import Logic from "./Logic.svelte";
 
     const scrollToBottom = (node) => {
         const scroll = () =>
@@ -60,11 +62,15 @@
 <div class="webble-chat-container" use:scrollToBottom>
     {#each $messages as message, index}
         {#if isGroupElementType(message, "text_bubble")}
-            <ChatBubble id={message.id} index={index}>{@html message.data.text}</ChatBubble>
+            <ChatBubble id={message.id}>{@html message.data.text}</ChatBubble>
+        {/if}
+
+        {#if isGroupElementTypes(message, ["script_logic", "request_logic"])}
+            <Logic />
         {/if}
 
         {#if isGroupElementType(message, "image_bubble")}
-            <ChatBubble id={message.id} index={index}
+            <ChatBubble id={message.id}
                 ><img
                     style="max-height: 448px"
                     src={message.data.url}
@@ -74,13 +80,13 @@
         {/if}
 
         {#if isGroupElementType(message, "audio_bubble")}
-            <ChatBubble id={message.id} index={index}>
+            <ChatBubble id={message.id}>
                 <Audio url={message.data.url} />
             </ChatBubble>
         {/if}
 
         {#if isGroupElementType(message, "video_bubble")}
-            <ChatBubble id={message.id} index={index}
+            <ChatBubble id={message.id}
                 >{@html generateVideoEmbed(parseVideoUrl(message.data.url))}</ChatBubble>
         {/if}
 

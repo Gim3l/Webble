@@ -1,15 +1,22 @@
 import {
   Icon,
   IconAt,
+  IconBrandJavascript,
   IconCheck,
   IconCode,
   IconCursorText,
+  IconFileCode,
+  IconFileCode2,
   IconFrame,
   IconHash,
   IconMessage,
   IconMusic,
   IconPhoto,
+  IconPrism,
+  IconScript,
+  IconServerBolt,
   IconVideo,
+  IconWebhook,
 } from "@tabler/icons-react";
 import { nanoid } from "nanoid";
 import {
@@ -40,7 +47,15 @@ import {
   EmbedBubbleGroupElement,
   TYPE_EMBED_BUBBLE_ELEMENT,
   EmbedBubbleElementData,
+  TYPE_REQUEST_LOGIC_ELEMENT,
+  RequestLogicElementData,
+  RequestLogicGroupElement,
 } from "./elements";
+import {
+  ScriptLogicElementData,
+  ScriptLogicGroupElement,
+  TYPE_SCRIPT_LOGIC_ELEMENT,
+} from "./elements/logic";
 
 export type EdgeData = {
   conditions: {
@@ -62,7 +77,9 @@ export type GroupElement<T extends ElementTypes = any> =
   | ImageBubbleGroupElement<T>
   | AudioBubbleGroupElement<T>
   | EmbedBubbleGroupElement<T>
-  | VideoBubbleGroupElement<T> ;
+  | ScriptLogicGroupElement<T>
+  | RequestLogicGroupElement<T>
+  | VideoBubbleGroupElement<T>;
 
 export type GroupNodeData = {
   name: string;
@@ -75,7 +92,7 @@ type ElementsConfigSchema = Record<
     icon: Icon;
     name: string;
     default: Record<string, unknown>;
-    group: "Inputs" | "Bubbles";
+    group: "Inputs" | "Bubbles" | "Logic";
   }
 >;
 
@@ -159,6 +176,34 @@ export const elementsConfig = {
       code: "",
     } satisfies EmbedBubbleElementData,
   },
+  [TYPE_SCRIPT_LOGIC_ELEMENT]: {
+    icon: IconFileCode2,
+    group: "Logic",
+    name: "Script",
+    default: {
+      name: "Custom Script",
+      code: "",
+    } satisfies ScriptLogicElementData,
+  },
+  [TYPE_REQUEST_LOGIC_ELEMENT]: {
+    icon: IconWebhook,
+    group: "Logic",
+    name: "HTTP Request",
+    default: {
+      name: "HTTP Request",
+      request: {
+        url: "",
+      },
+    } satisfies RequestLogicElementData,
+  },
 } satisfies ElementsConfigSchema;
 
+// flexible types for input elements that checks if the element is from inputs group
+
+type KeysByGroup<T, Group extends string> = {
+  [K in keyof T]: T[K] extends { group: Group } ? K : never;
+}[keyof T];
+
 export type ElementTypes = keyof typeof elementsConfig;
+
+export type InputElementTypes = KeysByGroup<typeof elementsConfig, "Inputs">;

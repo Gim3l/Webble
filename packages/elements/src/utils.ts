@@ -2,9 +2,14 @@ import {
   elementsConfig,
   ElementTypes,
   GroupElement,
+  InputElementTypes,
   TYPE_CHOICE_INPUT_ELEMENT,
 } from "./elementsConfig";
-import { VideoBubbleGroupElement } from "./elements";
+import {
+  TYPE_REQUEST_LOGIC_ELEMENT,
+  TYPE_SCRIPT_LOGIC_ELEMENT,
+  VideoBubbleGroupElement,
+} from "./elements";
 
 export function isGroupElement<T extends ElementTypes>(
   element: unknown,
@@ -23,13 +28,32 @@ export function elementHasOptions<T extends ElementTypes>(
   return Object.keys((element as GroupElement).data).indexOf("options") !== -1;
 }
 
-export function isFromInputsGroup(element: unknown): element is GroupElement<
-  "number_input" | "text_input" | "email_input"
-> & {
+export function isFromInputsGroup(
+  element: unknown,
+): element is GroupElement<InputElementTypes> & {
   index: number;
   sent?: { type: "text"; value: string };
 } & { data: { variable: string } } {
-  return elementsConfig[(element as GroupElement).type].group === "Inputs";
+  return (
+    elementsConfig[(element as GroupElement<InputElementTypes>).type].group ===
+    "Inputs"
+  );
+}
+
+/**
+ * These are element that stop the chat pipeline. No more elements are captured.
+ * @param element
+ */
+export function isTerminalGroupElement(
+  element: unknown,
+): element is GroupElement<
+  InputElementTypes | typeof TYPE_REQUEST_LOGIC_ELEMENT
+> {
+  return (
+    isFromInputsGroup(element) ||
+    (isGroupElementType(element, TYPE_REQUEST_LOGIC_ELEMENT) &&
+      !!element.data.runOnClient)
+  );
 }
 
 export function isGroupElementType<T extends ElementTypes>(
@@ -40,4 +64,14 @@ export function isGroupElementType<T extends ElementTypes>(
   sent?: { type: "text"; value: string };
 } {
   return (element as GroupElement).type === type;
+}
+
+export function isGroupElementTypes<T extends ElementTypes>(
+  element: unknown,
+  types: T[],
+): element is GroupElement<T> & {
+  index: number;
+  sent?: { type: "text"; value: string };
+} {
+  return types.includes((element as GroupElement).type);
 }

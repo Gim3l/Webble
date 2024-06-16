@@ -67,6 +67,8 @@ import {
   TYPE_IMAGE_BUBBLE_ELEMENT,
   TYPE_INPUT_ELEMENT,
   TYPE_NUMBER_INPUT_ELEMENT,
+  TYPE_REQUEST_LOGIC_ELEMENT,
+  TYPE_SCRIPT_LOGIC_ELEMENT,
   TYPE_TEXT_BUBBLE_ELEMENT,
   TYPE_VIDEO_BUBBLE_ELEMENT,
 } from "@webble/elements";
@@ -88,6 +90,8 @@ import ImageBubbleElement from "~/components/collect/elements/ImageBubbleElement
 import AudioBubbleElement from "~/components/collect/elements/AudioBubbleElement";
 import VideoBubbleElement from "~/components/collect/elements/VideoBubbleElement";
 import EmbedBubbleElement from "~/components/collect/elements/EmbedBubbleElement";
+import ScriptLogicElement from "~/components/collect/elements/ScriptLogicElement";
+import RequestLogicElement from "~/components/collect/elements/RequestLogicElement";
 
 export function reorder<Value>({
   list,
@@ -321,10 +325,14 @@ export function GroupItem({
     [TYPE_TEXT_BUBBLE_ELEMENT]: TextBubbleElement,
     [TYPE_CHOICE_INPUT_ELEMENT]: ChoiceInputElement,
     [TYPE_EMAIL_INPUT_ELEMENT]: EmailInputElement,
+    //bubbles
     [TYPE_IMAGE_BUBBLE_ELEMENT]: ImageBubbleElement,
     [TYPE_AUDIO_BUBBLE_ELEMENT]: AudioBubbleElement,
     [TYPE_VIDEO_BUBBLE_ELEMENT]: VideoBubbleElement,
     [TYPE_EMBED_BUBBLE_ELEMENT]: EmbedBubbleElement,
+    //logic
+    [TYPE_SCRIPT_LOGIC_ELEMENT]: ScriptLogicElement,
+    [TYPE_REQUEST_LOGIC_ELEMENT]: RequestLogicElement,
   };
 
   const ref = useRef<HTMLDivElement>(null);

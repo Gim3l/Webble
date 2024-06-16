@@ -1,105 +1,19 @@
 import { runChatPipeline } from "~/lib/chat.pipe";
 import { EdgeData, GroupElement, GroupNodeData } from "@webble/elements";
-import {
-  Edge,
-  Node,
-  ReactFlowInstance,
-  ReactFlowJsonObject,
-} from "@xyflow/react";
+import { Edge, Node, ReactFlowJsonObject } from "@xyflow/react";
 import { Effect } from "effect";
 import { ActionFunctionArgs, json } from "@remix-run/node";
 import { getForm } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
+import { init, Wasmer } from "@wasmer/sdk";
 import {
   addToChatHistory,
   createChatSession,
   getChatSession,
   updateChatSession,
 } from "~/queries/chat.queries";
-import invariant from "tiny-invariant";
-
-const data = {
-  edges: [
-    {
-      id: "ememzf-UyNUchlDyk5XtL",
-      source: "start",
-      target: "egNn1UJS1QvdkWgfoQ_Fi",
-      sourceHandle: "start",
-    },
-  ],
-  nodes: [
-    {
-      id: "start",
-      data: {},
-      type: "start",
-      measured: {
-        width: 194,
-        height: 39,
-      },
-      position: {
-        x: 500,
-        y: 500,
-      },
-    },
-    {
-      id: "egNn1UJS1QvdkWgfoQ_Fi",
-      data: {
-        name: "Group",
-        elements: [
-          {
-            id: "8cI6Sa9pEQcrrb4PhhJMh",
-            data: {
-              text: "Hello!",
-            },
-            type: "text_bubble",
-            index: 0,
-            groupId: "egNn1UJS1QvdkWgfoQ_Fi",
-          },
-          {
-            id: "-22PYqGeN_ArMAtb54WOi",
-            data: {
-              text: "Hello!",
-            },
-            type: "text_bubble",
-            index: 1,
-            groupId: "egNn1UJS1QvdkWgfoQ_Fi",
-          },
-          {
-            id: "tQDK-BTukryZhomrPxhBj",
-            data: {
-              variable: "",
-              buttonLabel: "Send",
-              placeholder: "",
-            },
-            type: "text_input",
-            index: 0,
-            groupId: "egNn1UJS1QvdkWgfoQ_Fi",
-          },
-          {
-            id: "243PYqGeN_ArMAtb54WOi",
-            data: {
-              text: "Hello!",
-            },
-            type: "text_bubble",
-            index: 2,
-            groupId: "egNn1UJS1QvdkWgfoQ_Fi",
-          },
-        ],
-      },
-      type: "collection",
-      dragging: false,
-      measured: {
-        width: 260,
-        height: 337,
-      },
-      position: {
-        x: 818,
-        y: 401,
-      },
-      selected: true,
-    },
-  ] as Node<GroupNodeData>[],
-};
+import { runScript } from "~/lib/runner";
+// await init();
 
 export async function action({ request, params }: ActionFunctionArgs) {
   const form = await getForm.run(dbClient, { id: params.formId as string });
@@ -127,6 +41,20 @@ export async function action({ request, params }: ActionFunctionArgs) {
       lastHistory: JSON.stringify(chatSession.history?.[0]),
     });
   }
+
+  const values = {};
+  // const isolate = new ivm.Isolate({ memoryLimit: 128 });
+  // await runScript(
+  //   `
+  //     setVariableValue("age", 200);
+  //     await fetch('https://jsonplaceholder.typicode.com/todos/1')
+  //   `,
+  //   values,
+  // ).catch((err) => {
+  //   console.log(err);
+  // });
+
+  console.log({ values });
 
   const result = await Effect.runPromise(
     runChatPipeline({
@@ -180,8 +108,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
       return session;
     });
 
-    return { sessionId: newSession.id, captures: result.captures };
+    return {
+      sessionId: newSession.id,
+      formId: params.formId as string,
+      captures: result.captures,
+    };
   }
 
-  return { sessionId, captures: result.captures };
+  return {
+    sessionId,
+    formId: params.formId as string,
+    captures: result.captures,
+  };
 }

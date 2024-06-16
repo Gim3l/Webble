@@ -1,4 +1,4 @@
-import { Effect, pipe } from "effect";
+import { Effect, pipe, Logger, LogLevel } from "effect";
 import { Edge, Node } from "@xyflow/react";
 import {
   EdgeData,
@@ -7,10 +7,18 @@ import {
   GroupNodeData,
   isFromInputsGroup,
   isGroupElementType,
+  isTerminalGroupElement,
   TYPE_IMAGE_BUBBLE_ELEMENT,
+  TYPE_REQUEST_LOGIC_ELEMENT,
+  TYPE_SCRIPT_LOGIC_ELEMENT,
   TYPE_TEXT_BUBBLE_ELEMENT,
   variableRegex,
+  isGroupElementTypes,
+  TYPE_INPUT_ELEMENT,
+  TYPE_NUMBER_INPUT_ELEMENT,
+  TYPE_EMAIL_INPUT_ELEMENT,
 } from "@webble/elements";
+import { RequestError } from "~/lib/errors";
 
 export type ChatState = {
   lastMessage?: string;
@@ -49,6 +57,22 @@ function withVariables(
     });
   }
 
+  if (isGroupElementType(groupElement, TYPE_SCRIPT_LOGIC_ELEMENT)) {
+    const code = groupElement.data.code;
+    const variableMatches = code.match(variableRegex);
+    variableMatches?.forEach((match) => {
+      const variableName = match.replace(/[{}]/g, "");
+
+      if (variables[variableName]) {
+        const variableValue = variables[variableName].value;
+        groupElement.data.code = groupElement.data.code.replace(
+          match,
+          variableValue.toString(),
+        );
+      }
+    });
+  }
+
   if (isGroupElementType(groupElement, TYPE_TEXT_BUBBLE_ELEMENT)) {
     const text = groupElement.data.text;
     const variableMatches = text.match(variableRegex);
@@ -65,7 +89,13 @@ function withVariables(
     });
   }
 
-  if (isFromInputsGroup(groupElement)) {
+  if (
+    isGroupElementTypes(groupElement, [
+      TYPE_INPUT_ELEMENT,
+      TYPE_NUMBER_INPUT_ELEMENT,
+      TYPE_EMAIL_INPUT_ELEMENT,
+    ])
+  ) {
     const placeholderMatches =
       groupElement.data.placeholder.match(variableRegex);
     const buttonLabelMatches =
@@ -99,6 +129,10 @@ function withVariables(
   return groupElement;
 }
 
+/**
+ * Sets the initial last captured element and starting group
+ * @param state
+ */
 export function startup(state: ChatState): Effect.Effect<ChatState, Error> {
   state.initialLastCapturedEl = state.lastCapturedEl;
 
@@ -121,6 +155,10 @@ export function startup(state: ChatState): Effect.Effect<ChatState, Error> {
   return Effect.succeed(state);
 }
 
+/**
+ * Saves the input from the message as a variable if a message is provided
+ * @param state
+ */
 export function saveInput(state: ChatState): Effect.Effect<ChatState, Error> {
   if (isFromInputsGroup(state.lastCapturedEl) && state.lastMessage) {
     if (state.lastCapturedEl.data?.variable) {
@@ -129,6 +167,11 @@ export function saveInput(state: ChatState): Effect.Effect<ChatState, Error> {
         value: state.lastMessage,
       };
     }
+  }
+
+  if (isGroupElementType(state.lastCapturedEl, TYPE_REQUEST_LOGIC_ELEMENT) && state.lastMessage) {
+    // if last captured element was a request logic element, then we need to parse the response as JSON
+    // and set all variables from the response as values
   }
 
   return Effect.succeed(state);
@@ -148,7 +191,6 @@ export function jumpIfNecessary(
 
     // handle elements with multiple handles/edges
     if (elementHasOptions(state.lastCapturedEl)) {
-      console.log("LINKED EDGES FOR ELEMENT", linkedEdges);
       for (const option of state.lastCapturedEl.data.options) {
         const optionEdges = state.edges.filter(
           (edge) => edge.sourceHandle === option.id,
@@ -223,7 +265,6 @@ export function jumpIfNecessary(
       );
 
       if (newGroup) {
-        console.log("switching to new group....");
         state.group = newGroup;
         state.initialLastCapturedEl = null;
         state.lastCapturedEl = state.group.data.elements[0];
@@ -237,61 +278,95 @@ export function jumpIfNecessary(
   return Effect.succeed(state);
 }
 
-export function captureNextGroupElements(
-  state: ChatState,
-): Effect.Effect<ChatState, Error> {
-  let startingIndex = 0;
+const httpRequest = (url: string) =>
+  Effect.tryPromise({
+    try: () => fetch(url),
+    catch: () => new RequestError(),
+  });
 
-  if (state.lastCapturedEl) {
-    console.log({ startingElementId: state.lastCapturedEl.id });
-    const startingElementIndex = state.group?.data.elements.findIndex(
-      (element) => element.id === state.lastCapturedEl?.id,
-    );
-    if (startingElementIndex !== -1 && startingElementIndex !== undefined) {
-      startingIndex = startingElementIndex;
-    }
-  }
+export function captureNextGroupElements(state: ChatState) {
+  return Effect.gen(function* (_) {
+    let startingIndex = 0;
 
-  const nextGroupElements = state.group?.data.elements.slice(startingIndex);
-  if (!nextGroupElements?.length) return Effect.succeed(state);
-
-  for (const element of nextGroupElements) {
-    if (
-      element.id === state.lastCapturedEl?.id &&
-      state.initialLastCapturedEl !== null
-    )
-      continue;
-    state.captures.push(element);
-
-    if (isFromInputsGroup(element)) {
-      return Effect.succeed(state);
-    }
-
-    // POST JUMP
-    // jump to new group if last element from current group is not from inputs group,
-    // e.g a text bubble is the last element
-    if (
-      element.id === nextGroupElements[nextGroupElements.length - 1]?.id &&
-      !isFromInputsGroup(element)
-    ) {
-      const linkedEdges = state.edges.filter(
-        (edge) => edge.source === state.group?.id,
+    if (state.lastCapturedEl) {
+      const startingElementIndex = state.group?.data.elements.findIndex(
+        (element) => element.id === state.lastCapturedEl?.id,
       );
-      if (linkedEdges.length === 0) return Effect.succeed(state);
-      const newGroup = state.groups.find(
-        (group) => group.id === linkedEdges?.[0].target,
-      );
-
-      if (newGroup && linkedEdges.length === 1) {
-        state.group = newGroup;
-        newGroup.data.elements.forEach((el) => {
-          nextGroupElements.push(el);
-        });
+      if (startingElementIndex !== -1 && startingElementIndex !== undefined) {
+        startingIndex = startingElementIndex;
       }
     }
-  }
 
-  return Effect.succeed(state);
+    const nextGroupElements = state.group?.data.elements.slice(startingIndex);
+    if (!nextGroupElements?.length) {
+      return yield* Effect.succeed(state);
+    }
+
+    for (const element of nextGroupElements) {
+      if (
+        element.id === state.lastCapturedEl?.id &&
+        state.initialLastCapturedEl !== null
+      )
+        continue;
+
+      // handle request logic
+      if (
+        isGroupElementType(element, TYPE_REQUEST_LOGIC_ELEMENT) &&
+        !element.data.runOnClient
+      ) {
+        const response = yield* httpRequest(element.data.request.url);
+        const data = yield* Effect.tryPromise(() => response.json());
+        console.log({ data });
+        continue;
+      }
+
+      yield* Effect.log(`Capturing ${element.type} `);
+      state.captures.push(element);
+
+      if (isTerminalGroupElement(element)) {
+        return yield* Effect.succeed(state);
+      }
+
+      // POST JUMP
+      // jump to new group if last element from current group is not a terminal element,
+      // e.g a text bubble is the last element
+      if (
+        element.id === nextGroupElements[nextGroupElements.length - 1]?.id &&
+        !isTerminalGroupElement(element)
+      ) {
+        yield* Effect.log("Jumping to next group");
+
+        const linkedEdges = state.edges
+          .filter((edge) => edge.source === state.group?.id)
+          .filter((edge) =>
+            state.groups.map((group) => group.id).includes(edge.target),
+          );
+
+        console.log({ linkedEdges });
+
+        if (linkedEdges.length === 0) return yield* Effect.succeed(state);
+        const newGroup = state.groups.find(
+          (group) => group.id === linkedEdges?.[0].target,
+        );
+
+        console.log("Linked edges" + linkedEdges.length);
+
+        if (newGroup && linkedEdges.length === 1) {
+          state.group = newGroup;
+          newGroup.data.elements.forEach((el) => {
+            nextGroupElements.push(el);
+          });
+        }
+      }
+    }
+
+    return yield* Effect.succeed(state);
+  }).pipe(
+    Effect.annotateLogs({
+      groupId: state.group?.id,
+      totalCaptures: state.captures.length,
+    }),
+  );
 }
 
 export function applyVariables(
@@ -303,13 +378,38 @@ export function applyVariables(
   return Effect.succeed(state);
 }
 
+function logState(state: ChatState, message: string) {
+  return Effect.gen(function* () {
+    yield* Effect.succeed(state);
+    return yield* Effect.log(message);
+  }).pipe(
+    Effect.annotateLogs({
+      captures: state.captures.length,
+      groupId: state.group?.id,
+    }),
+  );
+}
+
 export const runChatPipeline = (state: ChatState) =>
   pipe(
     Effect.succeed(state),
+    Effect.tap((state) => logState(state, "Starting chat pipeline")),
     Effect.flatMap((state) => startup(state)),
+    Effect.tap((state) => logState(state, "Saving input from message")),
     Effect.flatMap((state) => saveInput(state)),
+    Effect.tap((state) =>
+      logState(state, "Jumping to next group if necessary"),
+    ),
     // PRE-JUMP
     Effect.flatMap((state) => jumpIfNecessary(state)),
+    Effect.tap((state) =>
+      logState(state, "Starting capture of next group elements"),
+    ),
     Effect.flatMap((state) => captureNextGroupElements(state)),
+    Effect.tap(() =>
+      logState(state, "Applying variables to captured elements"),
+    ),
     Effect.flatMap((state) => applyVariables(state)),
+    Effect.tap((state) => logState(state, "Finished chat pipeline")),
+    Effect.withLogSpan("program"),
   );

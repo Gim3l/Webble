@@ -2,7 +2,14 @@
     import { scale, fade } from "svelte/transition";
     import { circIn, cubicInOut, quintInOut, elasticInOut } from "svelte/easing";
     import { onMount } from "svelte";
-    import { displayedMessages, messages, pendingCaptures } from "../stores";
+    import {
+        displayedMessages,
+        displayNextCapture,
+        messages,
+        pendingCaptures,
+        formId,
+        sessionId,
+    } from "../stores";
 
     export let wasSent: boolean = false;
     export let id: string;
@@ -22,16 +29,21 @@
         }, delay); // 0.5 second delay before showing text
     });
 
-    function displayNextCapture() {
-        if (!$pendingCaptures.length || wasSent) return;
-        const capture = $pendingCaptures[0];
-        pendingCaptures.update((currentCaptures) => {
-            return [...currentCaptures.slice(1)];
-        });
-        messages.update((currentMessages) => {
-            return [...currentMessages, capture];
-        });
-    }
+    // function displayNextCapture() {
+    //     if (!$pendingCaptures.length || wasSent) return;
+    //     const capture = $pendingCaptures[0];
+    //
+    //     if (isGroupElementType(capture, TYPE_SCRIPT_LOGIC_ELEMENT)) {
+    //         eval(capture.data.code);
+    //     }
+    //
+    //     pendingCaptures.update((currentCaptures) => {
+    //         return [...currentCaptures.slice(1)];
+    //     });
+    //     messages.update((currentMessages) => {
+    //         return [...currentMessages, capture];
+    //     });
+    // }
 </script>
 
 <style>
@@ -134,7 +146,7 @@
         class="webble-chat-bubble"
         class:webble-msg-sent={wasSent}
         on:introend={() => {
-            displayNextCapture();
+            displayNextCapture($pendingCaptures, { formId: $formId, sessionId: $sessionId });
         }}>
         <div in:fade={{ duration: 400 }}>
             <slot />
