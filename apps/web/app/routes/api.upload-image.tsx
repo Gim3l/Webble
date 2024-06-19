@@ -1,10 +1,13 @@
-import { ActionFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { createImage } from "~/queries/image.queries";
 import { auth } from "~/services/auth.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   const session = auth.getSession(request);
+  const isSignedIn = await session.isSignedIn();
+  if (!isSignedIn) throw redirect("/login");
+
   const formData = await request.formData();
   const client = new S3Client({
     region: "us-east-1",

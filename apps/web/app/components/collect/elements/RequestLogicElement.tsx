@@ -1,6 +1,5 @@
 import {
   Stack,
-  Textarea,
   Text,
   TextInput,
   FocusTrap,
@@ -18,8 +17,11 @@ import {
   Input,
   JsonInput,
   Switch,
+  Autocomplete,
 } from "@mantine/core";
 import ElementWrapper from "./ElementWrapper";
+import { CodeHighlight } from "@mantine/code-highlight";
+import "@mantine/code-highlight/styles.css";
 
 import {
   elementsConfig,
@@ -38,14 +40,17 @@ import {
   IconCurlyLoop,
   IconJson,
   IconListSearch,
+  IconPlayerPlay,
   IconPlus,
   IconSearch,
   IconStackFront,
   IconTrash,
+  IconVariable,
   IconX,
 } from "@tabler/icons-react";
 import { useDebouncedCallback, useMap } from "@mantine/hooks";
 import { nanoid } from "nanoid";
+import { useFetcher } from "@remix-run/react";
 
 function RequestLogicElement(element: RequestLogicGroupElement) {
   const theme = useMantineTheme();
@@ -56,6 +61,8 @@ function RequestLogicElement(element: RequestLogicGroupElement) {
     },
     500,
   );
+
+  const fetcher = useFetcher();
 
   return (
     <ElementWrapper
@@ -281,8 +288,61 @@ function RequestLogicElement(element: RequestLogicGroupElement) {
                     />
                   </Accordion.Panel>
                 </Accordion.Item>
+
+                <Accordion.Item value={"assign"}>
+                  <Accordion.Control
+                    icon={
+                      <ThemeIcon
+                        variant={"light"}
+                        color={theme.primaryColor}
+                        size={"xs"}
+                      >
+                        <IconVariable />
+                      </ThemeIcon>
+                    }
+                  >
+                    Assign to Variables
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <VariableMapper
+                      defaultValues={{}}
+                      onValueChange={() => {}}
+                      responseKeys={getObjectKeys(fetcher?.data || {})}
+                      variableKeys={["name", "email", "phone"]}
+                    />
+                  </Accordion.Panel>
+                </Accordion.Item>
               </Accordion>
             </Fieldset>
+
+            <Group justify={"end"}>
+              <Button
+                color={"teal"}
+                leftSection={<IconPlayerPlay size={16} />}
+                onClick={() => {
+                  if (!element.data.request.url) return;
+
+                  const formData = new FormData();
+                  formData.append("url", element.data.request.url);
+                  formData.append(
+                    "method",
+                    element.data.request.method || "GET",
+                  );
+                  fetcher.submit(formData, {
+                    method: "POST",
+                    action: "/api/test-http-request",
+                  });
+                }}
+              >
+                Send Test Request
+              </Button>
+            </Group>
+            {fetcher.data && (
+              <CodeHighlight
+                code={JSON.stringify(fetcher.data, null, 2)}
+                language={"json"}
+              />
+            )}
           </Stack>
         </FocusTrap>
       }
@@ -305,16 +365,6 @@ function MappingsField({
       { key, value },
     ]),
   );
-
-  // function convertToObject(map: Map<string, { key: string; value: string }>) {
-  //   return Object.keys(Object.fromEntries(map.entries())).map((key) => {
-  //     const item = map.get(key);
-  //     if (!item) return;
-  //     return {
-  //       [item.key]: item.value,
-  //     };
-  //   });
-  // }
 
   function convertToObject(map: Map<string, { key: string; value: string }>) {
     return Object.assign(
@@ -374,6 +424,131 @@ function MappingsField({
               onValueChange(convertToObject(map));
             }}
           ></VariableInput>
+
+          <ActionIcon
+            size={"xs"}
+            mb={4}
+            color={"red"}
+            variant={"light"}
+            onClick={() => {
+              map.delete(key);
+              onValueChange(convertToObject(map));
+            }}
+          >
+            <IconTrash />
+          </ActionIcon>
+        </Flex>
+      ))}
+      <Flex justify={"end"} mt={"xs"}>
+        <Button
+          size={"xs"}
+          leftSection={<IconPlus size={14} />}
+          onClick={() => {
+            map.set(nanoid(), { value: "", key: "" });
+          }}
+        >
+          Add
+        </Button>
+      </Flex>
+    </ScrollArea>
+  );
+}
+
+function getObjectKeys(obj, previousPath = "") {
+  const objectKeys: Array<string> = [];
+
+  Object.keys(obj).forEach((key) => {
+    const currentPath = previousPath ? `${previousPath}.${key}` : key;
+
+    if (typeof obj[key] !== "object") {
+      objectKeys.push(currentPath);
+    } else {
+      objectKeys.push(currentPath);
+      getObjectKeys(obj[key], currentPath);
+    }
+  });
+
+  return objectKeys;
+}
+
+function VariableMapper({
+  defaultValues,
+  onValueChange,
+  responseKeys,
+  variableKeys,
+}: {
+  defaultValues: Record<string, string>;
+  onValueChange: (value: Record<string, string>) => void;
+  responseKeys?: string[];
+  variableKeys?: string[];
+}) {
+  const map = useMap(
+    Object.entries(defaultValues).map(([key, value]) => [
+      nanoid(),
+      { key, value },
+    ]),
+  );
+
+  function convertToObject(map: Map<string, { key: string; value: string }>) {
+    return Object.assign(
+      {},
+      ...Object.keys(Object.fromEntries(map.entries())).map((key) => {
+        const item = map.get(key);
+        if (!item) return; // Handle missing keys
+        return {
+          [item.key]: item.value,
+        };
+      }),
+    );
+  }
+
+  return (
+    <ScrollArea h={200} offsetScrollbars>
+      {Array.from(map.entries()).map(([key, value]) => (
+        <Flex key={key} gap={"xs"} align={"end"}>
+          <Autocomplete
+            variant={"filled"}
+            label={"Variable"}
+            data={["React", "Angular", "Vue", "Svelte"]}
+            value={value.key}
+            onChange={(val) => {
+              map.set(key, {
+                key: val,
+                value: value.value,
+              });
+              onValueChange(convertToObject(map));
+            }}
+            onOptionSubmit={(val) => {
+              map.set(key, {
+                key: val,
+                value: value.value,
+              });
+              onValueChange(convertToObject(map));
+            }}
+            size={"xs"}
+          ></Autocomplete>
+          <Autocomplete
+            variant={"filled"}
+            label={"Response Key"}
+            size={"xs"}
+            value={value.value}
+            data={responseKeys}
+            onChange={(val) => {
+              map.set(key, {
+                key: value.key,
+                value: val,
+              });
+              onValueChange(convertToObject(map));
+            }}
+            onOptionSubmit={(val) => {
+              map.set(key, {
+                key: value.key,
+                value: val,
+              });
+
+              onValueChange(convertToObject(map));
+            }}
+          ></Autocomplete>
 
           <ActionIcon
             size={"xs"}

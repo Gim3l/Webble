@@ -5,14 +5,12 @@ import { Effect } from "effect";
 import { ActionFunctionArgs, json } from "@remix-run/node";
 import { getForm } from "~/queries/form.queries";
 import { dbClient } from "~/lib/db";
-import { init, Wasmer } from "@wasmer/sdk";
 import {
   addToChatHistory,
   createChatSession,
   getChatSession,
   updateChatSession,
 } from "~/queries/chat.queries";
-import { runScript } from "~/lib/runner";
 // await init();
 
 export async function action({ request, params }: ActionFunctionArgs) {

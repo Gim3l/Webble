@@ -1,7 +1,12 @@
 import { GiphyFetch } from "@giphy/js-fetch-api";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { auth } from "~/services/auth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  const session = auth.getSession(request);
+  const isSignedIn = await session.isSignedIn();
+  if (!isSignedIn) throw redirect("/login");
+
   const url = new URL(request.url);
   const query = url.searchParams.get("query") || "";
   const offset = Number(url.searchParams.get("offset") || "");

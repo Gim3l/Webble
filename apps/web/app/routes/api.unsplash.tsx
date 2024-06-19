@@ -1,7 +1,12 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { createApi } from "unsplash-js";
+import { auth } from "~/services/auth.server";
 
 export async function action({ request }: LoaderFunctionArgs) {
+  const session = auth.getSession(request);
+  const isSignedIn = await session.isSignedIn();
+  if (!isSignedIn) throw redirect("/login");
+
   const url = new URL(request.url);
   const query = url.searchParams.get("query") || "";
   const page = Number(url.searchParams.get("page")) || 1;
